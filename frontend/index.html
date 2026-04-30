@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="VoteWise — AI-powered election process education platform. Learn about voter registration, election timelines, and civic participation.">
+    <meta name="theme-color" content="#030712">
+    <title>VoteWise — AI Election Education Platform</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <!-- Particle Canvas -->
+    <canvas id="particle-canvas" style="position:fixed;inset:0;z-index:0;pointer-events:none"></canvas>
+
+    <div class="app-container">
+        <!-- Navigation -->
+        <nav class="nav-header" role="navigation" aria-label="Main navigation">
+            <div class="nav-brand">
+                <span>🗳️</span>
+                <span>VoteWise</span>
+            </div>
+            <ul class="nav-tabs" role="tablist">
+                <li class="nav-tab active" role="tab" data-section="dashboard" tabindex="0" aria-selected="true">📊 Dashboard</li>
+                <li class="nav-tab" role="tab" data-section="chat" tabindex="0" aria-selected="false">💬 AI Chat</li>
+                <li class="nav-tab" role="tab" data-section="timeline" tabindex="0" aria-selected="false">📅 Timeline</li>
+                <li class="nav-tab" role="tab" data-section="quiz" tabindex="0" aria-selected="false">🧠 Quiz</li>
+                <li class="nav-tab" role="tab" data-section="readiness" tabindex="0" aria-selected="false">✅ Readiness</li>
+            </ul>
+        </nav>
+
+        <!-- ═══ Dashboard ═══ -->
+        <section id="dashboard" class="section active" role="tabpanel" aria-label="Dashboard">
+            <div class="section-header">
+                <h1 class="section-title"><span class="gradient-text">Election Education Dashboard</span></h1>
+                <p class="section-subtitle">Your personalized civic learning hub — powered by Google Gemini AI</p>
+            </div>
+
+            <div class="stats-grid" id="stats-grid">
+                <div class="stat-card"><div class="stat-value" id="stat-users">—</div><div class="stat-label">Active Learners</div></div>
+                <div class="stat-card"><div class="stat-value" id="stat-quizzes">—</div><div class="stat-label">Quizzes Completed</div></div>
+                <div class="stat-card"><div class="stat-value" id="stat-xp">—</div><div class="stat-label">Total XP Earned</div></div>
+                <div class="stat-card"><div class="stat-value" id="stat-pass-rate">—</div><div class="stat-label">Quiz Pass Rate</div></div>
+            </div>
+
+            <div class="glass-card" style="margin-bottom:1.5rem">
+                <h2 style="margin-bottom:1rem">🏆 Leaderboard</h2>
+                <table class="leaderboard-table" id="leaderboard-table">
+                    <thead><tr><th>Rank</th><th>Learner</th><th>XP</th><th>Quizzes</th><th>Level</th></tr></thead>
+                    <tbody id="leaderboard-body"></tbody>
+                </table>
+            </div>
+
+            <div class="stats-grid">
+                <div class="card" style="cursor:pointer" onclick="switchTab('chat')">
+                    <h3>💬 Ask the AI</h3>
+                    <p style="color:var(--text-2);margin-top:0.5rem;font-size:0.88rem">Get instant answers from our Gemini-powered election assistant.</p>
+                </div>
+                <div class="card" style="cursor:pointer" onclick="switchTab('timeline')">
+                    <h3>📅 Election Timeline</h3>
+                    <p style="color:var(--text-2);margin-top:0.5rem;font-size:0.88rem">Explore the 9-step journey from registration to inauguration.</p>
+                </div>
+                <div class="card" style="cursor:pointer" onclick="switchTab('quiz')">
+                    <h3>🧠 Test Your Knowledge</h3>
+                    <p style="color:var(--text-2);margin-top:0.5rem;font-size:0.88rem">Take adaptive quizzes to earn XP and unlock badges.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- ═══ AI Chat ═══ -->
+        <section id="chat" class="section" role="tabpanel" aria-label="AI Chat">
+            <div class="section-header">
+                <h1 class="section-title"><span class="gradient-text">💬 AI Election Assistant</span></h1>
+                <p class="section-subtitle">Ask anything about elections — powered by Google Gemini 2.0 Flash</p>
+            </div>
+            <div class="chat-container">
+                <div class="chat-messages" id="chat-messages" role="log" aria-live="polite">
+                    <div class="chat-message system">👋 Welcome to VoteWise! I'm your AI election education assistant. Ask me anything about voter registration, election timelines, voting rights, or how democracy works!</div>
+                </div>
+                <div class="suggestions-bar" id="suggestions-bar">
+                    <button class="suggestion-chip" onclick="sendSuggestion('How do I register to vote?')">How do I register to vote?</button>
+                    <button class="suggestion-chip" onclick="sendSuggestion('What are the steps in an election?')">Election steps</button>
+                    <button class="suggestion-chip" onclick="sendSuggestion('How does the Electoral College work?')">Electoral College</button>
+                    <button class="suggestion-chip" onclick="sendSuggestion('What ID do I need to vote?')">Voter ID requirements</button>
+                </div>
+                <div class="chat-input-area">
+                    <input type="text" class="chat-input" id="chat-input" placeholder="Ask about elections..." aria-label="Type your question" autocomplete="off">
+                    <button class="btn btn-primary" id="chat-send-btn" onclick="sendMessage()" aria-label="Send message">Send ↗</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ═══ Timeline ═══ -->
+        <section id="timeline" class="section" role="tabpanel" aria-label="Election Timeline">
+            <div class="section-header">
+                <h1 class="section-title"><span class="gradient-text">📅 Election Process Timeline</span></h1>
+                <p class="section-subtitle">The complete journey from voter registration to inauguration</p>
+            </div>
+            <div class="timeline-grid" id="timeline-grid" role="list"></div>
+        </section>
+
+        <!-- ═══ Quiz ═══ -->
+        <section id="quiz" class="section" role="tabpanel" aria-label="Quiz">
+            <div class="section-header">
+                <h1 class="section-title"><span class="gradient-text">🧠 Election Knowledge Quiz</span></h1>
+                <p class="section-subtitle">Test your understanding and earn XP!</p>
+            </div>
+            <div id="quiz-setup">
+                <div class="quiz-setup">
+                    <div class="form-group">
+                        <label class="form-label" for="quiz-difficulty">Difficulty Level</label>
+                        <select class="form-select" id="quiz-difficulty">
+                            <option value="easy">🟢 Easy</option>
+                            <option value="medium">🟡 Medium</option>
+                            <option value="hard">🔴 Hard</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="quiz-count">Number of Questions</label>
+                        <select class="form-select" id="quiz-count">
+                            <option value="5">5 Questions</option>
+                            <option value="10">10 Questions</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="justify-content:flex-end">
+                        <button class="btn btn-primary" onclick="startQuiz()">Start Quiz 🚀</button>
+                    </div>
+                </div>
+            </div>
+            <div id="quiz-active" style="display:none"><div class="quiz-question-card" id="quiz-question-card"></div></div>
+            <div id="quiz-results" style="display:none"><div class="quiz-question-card result-card" id="quiz-result-card"></div></div>
+        </section>
+
+        <!-- ═══ Readiness ═══ -->
+        <section id="readiness" class="section" role="tabpanel" aria-label="Civic Readiness">
+            <div class="section-header">
+                <h1 class="section-title"><span class="gradient-text">✅ Civic Readiness Check</span></h1>
+                <p class="section-subtitle">Are you prepared to vote? Let's find out!</p>
+            </div>
+            <div class="glass-card">
+                <div class="readiness-form" id="readiness-form">
+                    <div class="form-group">
+                        <label class="form-label" for="readiness-age">Your Age</label>
+                        <input type="number" class="form-input" id="readiness-age" value="18" min="16" max="120">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="readiness-state">Your State</label>
+                        <input type="text" class="form-input" id="readiness-state" placeholder="e.g., California">
+                    </div>
+                    <label class="checkbox-group"><input type="checkbox" id="readiness-registered"> I am registered to vote</label>
+                    <label class="checkbox-group"><input type="checkbox" id="readiness-polling"> I know my polling location</label>
+                    <label class="checkbox-group"><input type="checkbox" id="readiness-id"> I have a valid photo ID</label>
+                    <label class="checkbox-group"><input type="checkbox" id="readiness-ballot"> I understand what's on the ballot</label>
+                    <button class="btn btn-primary" onclick="checkReadiness()" style="margin-top:0.85rem">Check My Readiness ✓</button>
+                </div>
+                <div class="readiness-result" id="readiness-result" style="display:none"></div>
+            </div>
+        </section>
+    </div>
+
+    <script src="/static/js/app.js"></script>
+</body>
+</html>

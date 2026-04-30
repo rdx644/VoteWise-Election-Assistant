@@ -1,0 +1,26 @@
+[project]
+name = "votewise-election-assistant"
+version = "1.0.0"
+description = "AI-powered Election Process Education Platform"
+requires-python = ">=3.11"
+
+[tool.pytest.ini_options]
+testpaths = ["backend/tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-v --tb=short --cov=backend --cov-report=term-missing --cov-fail-under=70"
+
+[tool.ruff]
+target-version = "py312"
+line-length = 120
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "B", "S", "UP", "ANN", "SIM"]
+ignore = [
+    "ANN001", "ANN002", "ANN003", "ANN101", "ANN102", "ANN201", "ANN202",
+    "ANN204", "ANN206", "S104", "S311", "B008",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"backend/tests/*" = ["S101", "ANN"]
