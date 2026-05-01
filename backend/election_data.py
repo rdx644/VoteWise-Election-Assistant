@@ -22,7 +22,6 @@ from backend.models import (
     ReadinessCheckResult,
 )
 
-
 # ──────────────────────────────────────────────
 #  Election Timeline Data
 # ──────────────────────────────────────────────
@@ -382,7 +381,8 @@ QUIZ_QUESTIONS: list[QuizQuestion] = [
         difficulty=QuizDifficulty.HARD, topic="voting_rights",
     ),
     QuizQuestion(
-        id="q-015", question="In which type of primary can a voter choose which party's primary to vote in on Election Day?",
+        id="q-015",
+        question="In which type of primary can a voter choose which party's primary to vote in on Election Day?",
         options=["Closed primary", "Open primary", "Blanket primary", "Semi-closed primary"],
         correct_answer=1, explanation="Open primaries allow voters to choose which party ballot to use at the polls.",
         difficulty=QuizDifficulty.HARD, topic="primary_elections", phase=ElectionPhase.PRIMARY_ELECTION,
@@ -391,7 +391,8 @@ QUIZ_QUESTIONS: list[QuizQuestion] = [
         id="q-016", question="What happens if no presidential candidate receives 270 Electoral College votes?",
         options=["A new election is held", "The House of Representatives chooses the President",
                  "The Supreme Court decides", "The candidate with most popular votes wins"],
-        correct_answer=1, explanation="Per the 12th Amendment, the House chooses the President from the top 3 candidates.",
+        correct_answer=1,
+        explanation="Per the 12th Amendment, the House chooses the President from the top 3 candidates.",
         difficulty=QuizDifficulty.HARD, topic="electoral_college",
     ),
     QuizQuestion(

@@ -3,6 +3,7 @@ Custom exception hierarchy for the VoteWise platform.
 """
 
 from __future__ import annotations
+
 from typing import Any
 
 

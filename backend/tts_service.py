@@ -5,6 +5,7 @@ Google Cloud Text-to-Speech integration for VoteWise.
 from __future__ import annotations
 
 import logging
+
 from backend.config import settings
 
 logger = logging.getLogger("votewise.tts")

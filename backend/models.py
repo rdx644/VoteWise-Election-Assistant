@@ -9,7 +9,7 @@ from datetime import UTC, datetime
 from enum import Enum
 from typing import Any
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, ValidationInfo, field_validator
 
 
 class ElectionType(str, Enum):
@@ -122,7 +122,7 @@ class QuizQuestion(BaseModel):
 
     @field_validator("correct_answer")
     @classmethod
-    def validate_correct_answer(cls, v: int, info: Any) -> int:
+    def validate_correct_answer(cls, v: int, info: ValidationInfo) -> int:
         if "options" in info.data and v >= len(info.data["options"]):
             raise ValueError("correct_answer index out of range")
         return v

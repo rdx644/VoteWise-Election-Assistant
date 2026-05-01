@@ -15,7 +15,6 @@ from backend.models import (
     QuizSession,
     UserProfile,
     UserProgress,
-    ElectionPhase,
 )
 
 logger = logging.getLogger("votewise.database")

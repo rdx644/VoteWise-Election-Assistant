@@ -9,7 +9,7 @@ from typing import Any
 from fastapi import APIRouter
 
 from backend.analytics import compute_system_health, compute_user_analytics
-from backend.cloud_storage import export_quiz_results, store_analytics_report
+from backend.cloud_storage import store_analytics_report
 from backend.database import db
 
 router = APIRouter(prefix="/api/analytics", tags=["Analytics"])

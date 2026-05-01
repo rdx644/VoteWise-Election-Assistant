@@ -52,7 +52,7 @@ async def get_phase(phase: str) -> dict[str, Any]:
     try:
         p = ElectionPhase(phase)
     except ValueError:
-        raise HTTPException(status_code=400, detail=f"Invalid phase: {phase}")
+        raise HTTPException(status_code=400, detail=f"Invalid phase: {phase}") from None
     step = get_step_by_phase(p)
     if not step:
         raise HTTPException(status_code=404, detail=f"Phase not found: {phase}")

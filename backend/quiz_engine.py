@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import logging
 import random
-from datetime import UTC, datetime
 
 from backend.cloud_logging import log_event
 from backend.database import db
@@ -16,7 +15,6 @@ from backend.election_data import QUIZ_QUESTIONS, get_questions_by_difficulty
 from backend.models import (
     QuizAttempt,
     QuizDifficulty,
-    QuizQuestion,
     QuizResult,
     QuizSession,
 )

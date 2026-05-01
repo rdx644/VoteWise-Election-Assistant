@@ -13,14 +13,18 @@ addopts = "-v --tb=short --cov=backend --cov-report=term-missing --cov-fail-unde
 
 [tool.ruff]
 target-version = "py312"
+src = ["."]
 line-length = 120
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "N", "B", "S", "UP", "ANN", "SIM"]
 ignore = [
-    "ANN001", "ANN002", "ANN003", "ANN101", "ANN102", "ANN201", "ANN202",
+    "ANN001", "ANN002", "ANN003", "ANN201", "ANN202",
     "ANN204", "ANN206", "S104", "S311", "B008",
 ]
 
 [tool.ruff.lint.per-file-ignores]
 "backend/tests/*" = ["S101", "ANN"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["backend"]

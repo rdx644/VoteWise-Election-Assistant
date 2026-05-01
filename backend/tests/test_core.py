@@ -13,24 +13,24 @@ from backend.election_data import (
     get_step_by_id,
     get_step_by_phase,
 )
+from backend.exceptions import (
+    AIGenerationError,
+    ConfigurationError,
+    EntityNotFoundError,
+    QuizValidationError,
+    RateLimitError,
+    VoteWiseError,
+)
 from backend.models import (
+    ChatRequest,
     ElectionPhase,
     LearningLevel,
     QuizDifficulty,
+    QuizQuestion,
     ReadinessCheckRequest,
     UserProfile,
-    QuizQuestion,
-    ChatRequest,
 )
 from backend.quiz_engine import complete_quiz, generate_quiz, submit_answer
-from backend.exceptions import (
-    VoteWiseError,
-    EntityNotFoundError,
-    AIGenerationError,
-    RateLimitError,
-    QuizValidationError,
-    ConfigurationError,
-)
 
 
 class TestElectionData:
@@ -118,7 +118,7 @@ class TestModels:
 
     def test_user_validates_empty_name(self):
         import pytest
-        with pytest.raises(Exception):
+        with pytest.raises(ValueError):
             UserProfile(name="   ")
 
     def test_quiz_question_validation(self):
@@ -131,7 +131,7 @@ class TestModels:
 
     def test_chat_request_validation(self):
         import pytest
-        with pytest.raises(Exception):
+        with pytest.raises(ValueError):
             ChatRequest(message="   ")
 
     def test_learning_levels(self):
