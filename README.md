@@ -1,5 +1,5 @@
 ## 🌐 Live Demo
-https://votewise-election-assistant-43248167698.us-central1.run.app)
+https://votewise-election-assistant-43248167698.us-central1.run.app
 
 # 🗳️ VoteWise — AI Election Education Platform
 
