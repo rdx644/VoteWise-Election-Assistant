@@ -20,22 +20,22 @@ VoteWise uses **Google Gemini 2.0 Flash** as its core AI engine, combined with a
 
 ```
 ┌──────────────────────────────────────────────────────┐
-│                  Frontend (HTML/CSS/JS)               │
-│  Dashboard │ AI Chat │ Timeline │ Quiz │ Readiness    │
+│                  Frontend (HTML/CSS/JS)              │
+│  Dashboard │ AI Chat │ Timeline │ Quiz │ Readiness   │
 └─────────────────────┬────────────────────────────────┘
                       │ REST API
-┌─────────────────────▼────────────────────────────────┐
-│                  FastAPI Backend                      │
+┌─────────────────────▼───────────────────────────────┐
+│                  FastAPI Backend                    │
 │  ┌──────────┐ ┌───────────┐ ┌──────────┐            │
 │  │ Gemini AI│ │ Quiz      │ │ Analytics│            │
 │  │ Service  │ │ Engine    │ │ Service  │            │
 │  └────┬─────┘ └─────┬─────┘ └────┬─────┘            │
-│       │             │            │                   │
+│       │             │            │                  │
 │  ┌────▼─────────────▼────────────▼─────┐            │
-│  │     Google Cloud Services Layer      │            │
-│  │  Logging│Storage│SecretMgr│Firestore │            │
-│  └──────────────────────────────────────┘            │
-└──────────────────────────────────────────────────────┘
+│  │     Google Cloud Services Layer      │           │
+│  │  Logging│Storage│SecretMgr│Firestore │           │
+│  └──────────────────────────────────────┘           │
+└─────────────────────────────────────────────────────┘
 ```
 
 ### Key Design Decisions
