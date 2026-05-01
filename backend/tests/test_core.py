@@ -64,8 +64,11 @@ class TestElectionData:
 
     def test_readiness_full_score(self):
         req = ReadinessCheckRequest(
-            age=25, is_registered=True, knows_polling_location=True,
-            has_valid_id=True, understands_ballot=True,
+            age=25,
+            is_registered=True,
+            knows_polling_location=True,
+            has_valid_id=True,
+            understands_ballot=True,
         )
         result = compute_readiness(req)
         assert result.score == 100.0
@@ -118,6 +121,7 @@ class TestModels:
 
     def test_user_validates_empty_name(self):
         import pytest
+
         with pytest.raises(ValueError):
             UserProfile(name="   ")
 
@@ -131,6 +135,7 @@ class TestModels:
 
     def test_chat_request_validation(self):
         import pytest
+
         with pytest.raises(ValueError):
             ChatRequest(message="   ")
 

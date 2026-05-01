@@ -19,6 +19,7 @@ _sm_client = None
 if settings.is_production and settings.google_cloud_project:  # pragma: no cover
     try:
         from google.cloud import secretmanager
+
         _sm_client = secretmanager.SecretManagerServiceClient()
         logger.info("Secret Manager initialized")
     except Exception as e:

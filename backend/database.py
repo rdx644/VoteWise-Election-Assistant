@@ -46,23 +46,38 @@ class DatabaseProtocol(Protocol):
 
 DEMO_USERS: list[UserProfile] = [
     UserProfile(
-        id="user-demo-01", name="Alex Johnson", email="alex@example.com",
-        state="California", learning_level="beginner", xp_points=150,
-        quizzes_completed=3, quizzes_passed=2,
+        id="user-demo-01",
+        name="Alex Johnson",
+        email="alex@example.com",
+        state="California",
+        learning_level="beginner",
+        xp_points=150,
+        quizzes_completed=3,
+        quizzes_passed=2,
         topics_explored=["voter_registration", "election_day"],
         badges=["First Quiz", "Registration Ready"],
     ),
     UserProfile(
-        id="user-demo-02", name="Sarah Williams", email="sarah@example.com",
-        state="Texas", learning_level="intermediate", xp_points=320,
-        quizzes_completed=7, quizzes_passed=6,
+        id="user-demo-02",
+        name="Sarah Williams",
+        email="sarah@example.com",
+        state="Texas",
+        learning_level="intermediate",
+        xp_points=320,
+        quizzes_completed=7,
+        quizzes_passed=6,
         topics_explored=["electoral_college", "primary_elections", "voting_rights"],
         badges=["First Quiz", "Quiz Master", "History Buff"],
     ),
     UserProfile(
-        id="user-demo-03", name="Marcus Chen", email="marcus@example.com",
-        state="New York", learning_level="advanced", xp_points=550,
-        quizzes_completed=12, quizzes_passed=11,
+        id="user-demo-03",
+        name="Marcus Chen",
+        email="marcus@example.com",
+        state="New York",
+        learning_level="advanced",
+        xp_points=550,
+        quizzes_completed=12,
+        quizzes_passed=11,
         topics_explored=["voter_registration", "electoral_college", "gerrymandering", "voting_rights"],
         civic_readiness_score=95.0,
         badges=["First Quiz", "Quiz Master", "Civic Champion", "Election Expert"],
@@ -71,6 +86,7 @@ DEMO_USERS: list[UserProfile] = [
 
 
 # ── InMemory Database ──
+
 
 class InMemoryDatabase:
     """Thread-safe in-memory data store with demo data."""
@@ -142,11 +158,13 @@ class InMemoryDatabase:
 
 # ── Firestore Database ──
 
+
 class FirestoreDatabase:  # pragma: no cover
     """Google Cloud Firestore database implementation."""
 
     def __init__(self):
         from google.cloud import firestore
+
         self.client = firestore.Client(project=settings.google_cloud_project)
         logger.info("Firestore database initialized")
 
@@ -209,6 +227,7 @@ class FirestoreDatabase:  # pragma: no cover
 
 
 # ── Factory ──
+
 
 def _create_database() -> InMemoryDatabase | FirestoreDatabase:
     if settings.use_firestore:  # pragma: no cover

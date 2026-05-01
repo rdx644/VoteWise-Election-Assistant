@@ -110,6 +110,7 @@ app.include_router(user_router)
 
 # ── Health Check ──
 
+
 @app.get("/api/health")
 async def health_check() -> dict[str, Any]:
     """System health endpoint for monitoring and load balancers."""
@@ -130,6 +131,7 @@ async def health_check() -> dict[str, Any]:
 
 
 # ── Exception Handler ──
+
 
 @app.exception_handler(VoteWiseError)
 async def votewise_error_handler(request, exc: VoteWiseError):

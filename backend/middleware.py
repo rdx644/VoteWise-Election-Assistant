@@ -99,7 +99,5 @@ def register_middleware(app: FastAPI) -> None:
         elapsed = round((time.monotonic() - start) * 1000, 2)
         response.headers["X-Response-Time"] = f"{elapsed}ms"
 
-        logger.info(
-            f"{request.method} {request.url.path} → {response.status_code} ({elapsed}ms) [{request_id}]"
-        )
+        logger.info(f"{request.method} {request.url.path} → {response.status_code} ({elapsed}ms) [{request_id}]")
         return response

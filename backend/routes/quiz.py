@@ -71,7 +71,13 @@ async def list_questions(difficulty: str = "", topic: str = "") -> list[dict[str
 
     # Return without correct answers for study mode
     return [
-        {"id": q.id, "question": q.question, "options": q.options,
-         "difficulty": q.difficulty.value, "topic": q.topic, "points": q.points}
+        {
+            "id": q.id,
+            "question": q.question,
+            "options": q.options,
+            "difficulty": q.difficulty.value,
+            "topic": q.topic,
+            "points": q.points,
+        }
         for q in questions
     ]

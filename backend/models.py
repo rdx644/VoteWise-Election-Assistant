@@ -52,6 +52,7 @@ class ChatRole(str, Enum):
 
 # ── User & Progress ──
 
+
 class UserProfile(BaseModel):
     id: str = Field(default_factory=lambda: f"user-{uuid.uuid4().hex[:8]}")
     name: str = Field(..., min_length=1, max_length=100)
@@ -86,6 +87,7 @@ class UserProgress(BaseModel):
 
 # ── Election Timeline ──
 
+
 class ElectionStep(BaseModel):
     id: str
     phase: ElectionPhase
@@ -108,6 +110,7 @@ class ElectionTimeline(BaseModel):
 
 
 # ── Quiz ──
+
 
 class QuizQuestion(BaseModel):
     id: str = Field(default_factory=lambda: f"q-{uuid.uuid4().hex[:8]}")
@@ -163,6 +166,7 @@ class QuizResult(BaseModel):
 
 # ── Chat ──
 
+
 class ChatMessage(BaseModel):
     id: str = Field(default_factory=lambda: f"msg-{uuid.uuid4().hex[:8]}")
     role: ChatRole
@@ -207,6 +211,7 @@ class ChatResponse(BaseModel):
 
 
 # ── Civic Readiness ──
+
 
 class ReadinessCheckRequest(BaseModel):
     user_id: str = ""

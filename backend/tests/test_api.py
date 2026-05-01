@@ -76,8 +76,13 @@ class TestTimelineEndpoints:
         assert res.status_code == 200
 
     def test_readiness_check(self, client: TestClient) -> None:
-        data = {"age": 25, "is_registered": True, "has_valid_id": True,
-                "knows_polling_location": True, "understands_ballot": False}
+        data = {
+            "age": 25,
+            "is_registered": True,
+            "has_valid_id": True,
+            "knows_polling_location": True,
+            "understands_ballot": False,
+        }
         res = client.post("/api/timeline/readiness", json=data)
         assert res.status_code == 200
         assert "score" in res.json()
@@ -114,9 +119,7 @@ class TestQuizEndpoints:
 
         # Answer
         q = quiz["questions"][0]
-        res = client.post(
-            f"/api/quiz/answer?session_id={session_id}&question_id={q['id']}&selected_answer=0"
-        )
+        res = client.post(f"/api/quiz/answer?session_id={session_id}&question_id={q['id']}&selected_answer=0")
         assert res.status_code == 200
 
         # Complete

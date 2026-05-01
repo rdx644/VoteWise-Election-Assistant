@@ -27,6 +27,7 @@ _cloud_client = None
 if settings.is_production and settings.google_cloud_project:  # pragma: no cover
     try:
         from google.cloud import logging as cloud_logging
+
         _cloud_client = cloud_logging.Client(project=settings.google_cloud_project)
         _cloud_client.setup_logging()
         logger.info("Google Cloud Logging initialized")

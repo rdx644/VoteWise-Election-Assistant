@@ -24,6 +24,7 @@ def _get_model():  # pragma: no cover
     global _model
     if _model is None:
         import google.generativeai as genai
+
         api_key = settings.gemini_api_key
         if not api_key:
             logger.warning("GEMINI_API_KEY not set — using fallback responses")
@@ -180,17 +181,24 @@ async def generate_chat_response(
             response = model.generate_content(full_prompt)
 
         response_text = response.text
-        latency = log_latency("gemini_chat", start, metadata={
-            "level": learning_level.value,
-            "message_length": len(message),
-        })
+        latency = log_latency(
+            "gemini_chat",
+            start,
+            metadata={
+                "level": learning_level.value,
+                "message_length": len(message),
+            },
+        )
 
-        log_event("chat_generated", {
-            "session_id": session.id,
-            "level": learning_level.value,
-            "response_length": len(response_text),
-            "latency_ms": round(latency, 2),
-        })
+        log_event(
+            "chat_generated",
+            {
+                "session_id": session.id,
+                "level": learning_level.value,
+                "response_length": len(response_text),
+                "latency_ms": round(latency, 2),
+            },
+        )
 
         return ChatResponse(
             session_id=session.id,
@@ -249,6 +257,7 @@ def _extract_topics(message: str) -> list[str]:
 def _get_civic_tip() -> str:
     """Return a random civic engagement tip."""
     import random
+
     tips = [
         "Visit vote.gov to check your voter registration status!",
         "Mark your calendar — know your state's registration deadline!",

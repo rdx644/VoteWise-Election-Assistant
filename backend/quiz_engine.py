@@ -56,11 +56,14 @@ def generate_quiz(
     )
 
     db.save_quiz_session(session)
-    log_event("quiz_generated", {
-        "session_id": session.id,
-        "difficulty": difficulty.value,
-        "num_questions": len(selected),
-    })
+    log_event(
+        "quiz_generated",
+        {
+            "session_id": session.id,
+            "difficulty": difficulty.value,
+            "num_questions": len(selected),
+        },
+    )
     return session
 
 
@@ -93,8 +96,7 @@ def submit_answer(
         session.points_earned += question.points
 
     session.score = (
-        sum(1 for a in session.attempts if a.is_correct) / len(session.attempts) * 100
-        if session.attempts else 0
+        sum(1 for a in session.attempts if a.is_correct) / len(session.attempts) * 100 if session.attempts else 0
     )
 
     db.save_quiz_session(session)
@@ -156,11 +158,14 @@ def complete_quiz(session_id: str) -> QuizResult | dict:
         badges_earned=badges_earned,
     )
 
-    log_event("quiz_completed", {
-        "session_id": session_id,
-        "score": result.score_percent,
-        "xp": xp,
-        "badges": badges_earned,
-    })
+    log_event(
+        "quiz_completed",
+        {
+            "session_id": session_id,
+            "score": result.score_percent,
+            "xp": xp,
+            "badges": badges_earned,
+        },
+    )
 
     return result

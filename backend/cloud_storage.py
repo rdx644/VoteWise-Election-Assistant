@@ -21,6 +21,7 @@ _bucket = None
 if settings.is_production and settings.google_cloud_project:  # pragma: no cover
     try:
         from google.cloud import storage
+
         _client = storage.Client(project=settings.google_cloud_project)
         bucket_name = settings.gcs_bucket_name or f"{settings.google_cloud_project}-votewise"
         try:

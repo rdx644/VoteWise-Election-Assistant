@@ -33,9 +33,14 @@ async def get_leaderboard(limit: int = 10) -> list[dict[str, Any]]:
     users = db.list_users()
     sorted_users = sorted(users, key=lambda u: u.xp_points, reverse=True)[:limit]
     return [
-        {"rank": i + 1, "name": u.name, "xp_points": u.xp_points,
-         "quizzes_completed": u.quizzes_completed, "badges": u.badges,
-         "level": u.learning_level.value}
+        {
+            "rank": i + 1,
+            "name": u.name,
+            "xp_points": u.xp_points,
+            "quizzes_completed": u.quizzes_completed,
+            "badges": u.badges,
+            "level": u.learning_level.value,
+        }
         for i, u in enumerate(sorted_users)
     ]
 
