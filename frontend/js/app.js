@@ -1,23 +1,80 @@
 /**
- * VoteWise — Premium Frontend with Particle System & Animated Counters
+ * VoteWise frontend interactions.
  */
 
-const API = '';
-let chatSessionId = '';
+const API = "";
+let chatSessionId = "";
 let currentQuiz = null;
 let currentQuestionIndex = 0;
 
-// ═══ Particle System ═══
+const $ = (selector, root = document) => root.querySelector(selector);
+const $$ = (selector, root = document) => Array.from(root.querySelectorAll(selector));
+
+function createElement(tag, options = {}, children = []) {
+  const node = document.createElement(tag);
+  if (options.className) node.className = options.className;
+  if (options.id) node.id = options.id;
+  if (options.text !== undefined) node.textContent = String(options.text);
+  if (options.htmlFor) node.htmlFor = options.htmlFor;
+  if (options.type) node.type = options.type;
+  if (options.value !== undefined) node.value = options.value;
+  if (options.attributes) {
+    Object.entries(options.attributes).forEach(([key, value]) => node.setAttribute(key, value));
+  }
+  if (options.dataset) {
+    Object.entries(options.dataset).forEach(([key, value]) => {
+      node.dataset[key] = value;
+    });
+  }
+  if (options.style) Object.assign(node.style, options.style);
+  if (options.on) {
+    Object.entries(options.on).forEach(([eventName, handler]) => node.addEventListener(eventName, handler));
+  }
+  children.forEach(child => node.append(child));
+  return node;
+}
+
+function replaceChildren(parent, children) {
+  if (!parent) return;
+  parent.replaceChildren(...children);
+}
+
+function appendMarkdownText(parent, text) {
+  const parts = String(text).split(/(\*\*.*?\*\*|\n)/g).filter(Boolean);
+  parts.forEach(part => {
+    if (part === "\n") {
+      parent.append(document.createElement("br"));
+    } else if (part.startsWith("**") && part.endsWith("**")) {
+      parent.append(createElement("strong", { text: part.slice(2, -2) }));
+    } else {
+      parent.append(document.createTextNode(part));
+    }
+  });
+}
+
+function apiJson(url, options = {}) {
+  return fetch(url, options).then(response => {
+    if (!response.ok) throw new Error(`Request failed: ${response.status}`);
+    return response.json();
+  });
+}
+
+// Particle system
 (function initParticles() {
-  const canvas = document.getElementById('particle-canvas');
+  const canvas = $("#particle-canvas");
   if (!canvas) return;
-  const ctx = canvas.getContext('2d');
-  let particles = [];
-  const resize = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; };
-  resize(); window.addEventListener('resize', resize);
+  const ctx = canvas.getContext("2d");
+  const particles = [];
+  const resize = () => {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  };
 
   class Particle {
-    constructor() { this.reset(); }
+    constructor() {
+      this.reset();
+    }
+
     reset() {
       this.x = Math.random() * canvas.width;
       this.y = Math.random() * canvas.height;
@@ -27,10 +84,13 @@ let currentQuestionIndex = 0;
       this.opacity = Math.random() * 0.4 + 0.1;
       this.hue = Math.random() > 0.5 ? 220 : 260;
     }
+
     update() {
-      this.x += this.vx; this.y += this.vy;
+      this.x += this.vx;
+      this.y += this.vy;
       if (this.x < 0 || this.x > canvas.width || this.y < 0 || this.y > canvas.height) this.reset();
     }
+
     draw() {
       ctx.beginPath();
       ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
@@ -39,11 +99,13 @@ let currentQuestionIndex = 0;
     }
   }
 
-  for (let i = 0; i < 60; i++) particles.push(new Particle());
+  resize();
+  window.addEventListener("resize", resize);
+  for (let i = 0; i < 60; i += 1) particles.push(new Particle());
 
   function drawLines() {
-    for (let i = 0; i < particles.length; i++) {
-      for (let j = i + 1; j < particles.length; j++) {
+    for (let i = 0; i < particles.length; i += 1) {
+      for (let j = i + 1; j < particles.length; j += 1) {
         const dx = particles[i].x - particles[j].x;
         const dy = particles[i].y - particles[j].y;
         const dist = Math.sqrt(dx * dx + dy * dy);
@@ -61,276 +123,445 @@ let currentQuestionIndex = 0;
 
   function animate() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    particles.forEach(p => { p.update(); p.draw(); });
+    particles.forEach(particle => {
+      particle.update();
+      particle.draw();
+    });
     drawLines();
     requestAnimationFrame(animate);
   }
+
   animate();
 })();
 
-// ═══ Animated Counter ═══
-function animateCounter(el, target, suffix = '') {
+function animateCounter(el, target, suffix = "") {
   if (!el) return;
   const duration = 1200;
   const start = performance.now();
-  const initial = 0;
 
   function tick(now) {
     const progress = Math.min((now - start) / duration, 1);
     const eased = 1 - Math.pow(1 - progress, 3);
-    const current = Math.round(initial + (target - initial) * eased);
+    const current = Math.round(target * eased);
     el.textContent = current.toLocaleString() + suffix;
     if (progress < 1) requestAnimationFrame(tick);
   }
+
   requestAnimationFrame(tick);
 }
 
-// ═══ Navigation ═══
-document.querySelectorAll('.nav-tab').forEach(tab => {
-  tab.addEventListener('click', () => switchTab(tab.dataset.section));
-  tab.addEventListener('keydown', e => { if (e.key === 'Enter') switchTab(tab.dataset.section); });
-});
-
 function switchTab(section) {
-  document.querySelectorAll('.nav-tab').forEach(t => { t.classList.remove('active'); t.setAttribute('aria-selected', 'false'); });
-  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-  const tab = document.querySelector(`[data-section="${section}"]`);
-  if (tab) { tab.classList.add('active'); tab.setAttribute('aria-selected', 'true'); }
-  const sec = document.getElementById(section);
-  if (sec) sec.classList.add('active');
-  if (section === 'dashboard') loadDashboard();
-  if (section === 'timeline') loadTimeline();
+  $$(".nav-tab").forEach(tab => {
+    tab.classList.remove("active");
+    tab.setAttribute("aria-selected", "false");
+  });
+  $$(".section").forEach(sectionNode => sectionNode.classList.remove("active"));
+
+  const tab = $(`[data-section="${section}"]`);
+  if (tab) {
+    tab.classList.add("active");
+    tab.setAttribute("aria-selected", "true");
+  }
+  const sectionNode = document.getElementById(section);
+  if (sectionNode) sectionNode.classList.add("active");
+
+  if (section === "dashboard") loadDashboard();
+  if (section === "timeline") loadTimeline();
 }
 
-// ═══ Dashboard ═══
+function renderSuggestionButtons(questions) {
+  const bar = $("#suggestions-bar");
+  replaceChildren(
+    bar,
+    questions.map(question =>
+      createElement("button", {
+        className: "suggestion-chip",
+        text: question,
+        type: "button",
+        on: { click: () => sendSuggestion(question) },
+      }),
+    ),
+  );
+}
+
 async function loadDashboard() {
   try {
     const [analytics, leaderboard] = await Promise.all([
-      fetch(`${API}/api/analytics/summary`).then(r => r.json()),
-      fetch(`${API}/api/analytics/leaderboard`).then(r => r.json()),
+      apiJson(`${API}/api/analytics/summary`),
+      apiJson(`${API}/api/analytics/leaderboard`),
     ]);
 
-    animateCounter(document.getElementById('stat-users'), analytics.total_users || 0);
-    animateCounter(document.getElementById('stat-quizzes'), analytics.total_quizzes_completed || 0);
-    animateCounter(document.getElementById('stat-xp'), analytics.total_xp_awarded || 0);
-    animateCounter(document.getElementById('stat-pass-rate'), analytics.quiz_pass_rate || 0, '%');
+    animateCounter($("#stat-users"), analytics.total_users || 0);
+    animateCounter($("#stat-quizzes"), analytics.total_quizzes_completed || 0);
+    animateCounter($("#stat-xp"), analytics.total_xp_awarded || 0);
+    animateCounter($("#stat-pass-rate"), analytics.quiz_pass_rate || 0, "%");
 
-    const tbody = document.getElementById('leaderboard-body');
-    tbody.innerHTML = leaderboard.map((u, i) => `
-      <tr style="animation:sectionIn 0.4s ease-out ${i * 0.08}s both">
-        <td><span class="rank-badge rank-${i + 1}">${i + 1}</span></td>
-        <td style="font-weight:600">${u.name}</td>
-        <td style="color:#60a5fa;font-weight:700">${u.xp_points.toLocaleString()} XP</td>
-        <td>${u.quizzes_completed}</td>
-        <td><span class="badge">${u.level}</span></td>
-      </tr>
-    `).join('');
-  } catch (e) { console.error('Dashboard load error:', e); }
+    const rows = leaderboard.map((user, index) => {
+      const row = createElement("tr", {
+        style: { animation: `sectionIn 0.4s ease-out ${index * 0.08}s both` },
+      });
+      row.append(
+        createElement("td", {}, [createElement("span", { className: `rank-badge rank-${index + 1}`, text: index + 1 })]),
+        createElement("td", { text: user.name, style: { fontWeight: "600" } }),
+        createElement("td", {
+          text: `${Number(user.xp_points || 0).toLocaleString()} XP`,
+          style: { color: "#60a5fa", fontWeight: "700" },
+        }),
+        createElement("td", { text: user.quizzes_completed || 0 }),
+        createElement("td", {}, [createElement("span", { className: "badge", text: user.level })]),
+      );
+      return row;
+    });
+    replaceChildren($("#leaderboard-body"), rows);
+  } catch (error) {
+    console.error("Dashboard load error:", error);
+  }
 }
 
-// ═══ Chat ═══
-const chatInput = document.getElementById('chat-input');
-chatInput.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } });
+const chatInput = $("#chat-input");
+if (chatInput) {
+  chatInput.addEventListener("keydown", event => {
+    if (event.key === "Enter" && !event.shiftKey) {
+      event.preventDefault();
+      sendMessage();
+    }
+  });
+}
 
-function sendSuggestion(text) { chatInput.value = text; sendMessage(); }
+function sendSuggestion(text) {
+  chatInput.value = text;
+  sendMessage();
+}
+
+function showLoadingMessage() {
+  const loadingDots = createElement("div", { className: "loading-dots" }, [
+    createElement("span"),
+    createElement("span"),
+    createElement("span"),
+  ]);
+  const loadingEl = createElement("div", { className: "chat-message assistant", id: "chat-loading" }, [loadingDots]);
+  $("#chat-messages").append(loadingEl);
+  scrollChat();
+}
 
 async function sendMessage() {
   const message = chatInput.value.trim();
   if (!message) return;
-  addChatMessage(message, 'user');
-  chatInput.value = '';
-  chatInput.disabled = true;
-  document.getElementById('chat-send-btn').disabled = true;
 
-  const loadingEl = document.createElement('div');
-  loadingEl.className = 'chat-message assistant';
-  loadingEl.innerHTML = '<div class="loading-dots"><span></span><span></span><span></span></div>';
-  loadingEl.id = 'chat-loading';
-  document.getElementById('chat-messages').appendChild(loadingEl);
-  scrollChat();
+  addChatMessage(message, "user");
+  chatInput.value = "";
+  chatInput.disabled = true;
+  $("#chat-send-btn").disabled = true;
+  showLoadingMessage();
 
   try {
-    const res = await fetch(`${API}/api/chat`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message, session_id: chatSessionId, learning_level: 'beginner', topic: 'general' }),
+    const data = await apiJson(`${API}/api/chat`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message, session_id: chatSessionId, learning_level: "beginner", topic: "general" }),
     });
-    const data = await res.json();
-    document.getElementById('chat-loading')?.remove();
+    $("#chat-loading")?.remove();
     chatSessionId = data.session_id || chatSessionId;
-    addChatMessage(data.message, 'assistant');
-    if (data.civic_tip) addChatMessage(`💡 ${data.civic_tip}`, 'system');
-
-    if (data.suggested_questions?.length) {
-      document.getElementById('suggestions-bar').innerHTML = data.suggested_questions.map(q =>
-        `<button class="suggestion-chip" onclick="sendSuggestion('${q.replace(/'/g, "\\'")}')">${q}</button>`
-      ).join('');
-    }
-  } catch (e) {
-    document.getElementById('chat-loading')?.remove();
-    addChatMessage('Sorry, I encountered an error. Please try again.', 'assistant');
+    addChatMessage(data.message, "assistant");
+    if (data.civic_tip) addChatMessage(`Tip: ${data.civic_tip}`, "system");
+    if (data.suggested_questions?.length) renderSuggestionButtons(data.suggested_questions);
+  } catch (error) {
+    $("#chat-loading")?.remove();
+    addChatMessage("Sorry, I encountered an error. Please try again.", "assistant");
+  } finally {
+    chatInput.disabled = false;
+    $("#chat-send-btn").disabled = false;
+    chatInput.focus();
   }
-  chatInput.disabled = false;
-  document.getElementById('chat-send-btn').disabled = false;
-  chatInput.focus();
 }
 
 function addChatMessage(text, role) {
-  const el = document.createElement('div');
-  el.className = `chat-message ${role}`;
-  el.innerHTML = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
-  document.getElementById('chat-messages').appendChild(el);
+  const message = createElement("div", { className: `chat-message ${role}` });
+  appendMarkdownText(message, text);
+  $("#chat-messages").append(message);
   scrollChat();
 }
 
 function scrollChat() {
-  const c = document.getElementById('chat-messages');
-  c.scrollTop = c.scrollHeight;
+  const container = $("#chat-messages");
+  container.scrollTop = container.scrollHeight;
 }
 
-// ═══ Timeline ═══
 async function loadTimeline() {
   try {
-    const data = await fetch(`${API}/api/timeline`).then(r => r.json());
-    document.getElementById('timeline-grid').innerHTML = data.steps.map((step, i) => `
-      <div class="timeline-step" data-step="${i + 1}" role="listitem"
-           onclick="toggleStep(this)" tabindex="0" onkeydown="if(event.key==='Enter')toggleStep(this)"
-           style="animation:sectionIn 0.4s ease-out ${i * 0.06}s both">
-        <div class="step-header">
-          <span class="step-icon">${step.icon}</span>
-          <span class="step-title">${step.title}</span>
-        </div>
-        <p class="step-summary">${step.summary}</p>
-        <div class="step-details" id="step-detail-${i}">
-          ${step.detailed_description ? `<p style="color:var(--text-2);margin-bottom:0.85rem">${step.detailed_description}</p>` : ''}
-          ${step.requirements.length ? `<div class="detail-section"><div class="detail-label">Requirements</div><ul class="detail-list">${step.requirements.map(r => `<li>${r}</li>`).join('')}</ul></div>` : ''}
-          ${step.tips.length ? `<div class="detail-section"><div class="detail-label">Tips</div><ul class="detail-list">${step.tips.map(t => `<li>${t}</li>`).join('')}</ul></div>` : ''}
-          ${step.key_dates.length ? `<div class="detail-section"><div class="detail-label">Key Dates</div><ul class="detail-list">${step.key_dates.map(d => `<li>${d}</li>`).join('')}</ul></div>` : ''}
-        </div>
-      </div>
-    `).join('');
-  } catch (e) { console.error('Timeline load error:', e); }
+    const data = await apiJson(`${API}/api/timeline`);
+    const steps = data.steps.map((step, index) => {
+      const details = createElement("div", { className: "step-details", id: `step-detail-${index}` });
+
+      if (step.detailed_description) {
+        details.append(createElement("p", { text: step.detailed_description, style: { color: "var(--text-2)", marginBottom: "0.85rem" } }));
+      }
+      appendDetailList(details, "Requirements", step.requirements);
+      appendDetailList(details, "Tips", step.tips);
+      appendDetailList(details, "Key Dates", step.key_dates);
+
+      const node = createElement(
+        "div",
+        {
+          className: "timeline-step",
+          attributes: { role: "listitem", tabindex: "0", "aria-expanded": "false" },
+          dataset: { step: index + 1 },
+          style: { animation: `sectionIn 0.4s ease-out ${index * 0.06}s both` },
+          on: {
+            click: event => toggleStep(event.currentTarget),
+            keydown: event => {
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                toggleStep(event.currentTarget);
+              }
+            },
+          },
+        },
+        [
+          createElement("div", { className: "step-header" }, [
+            createElement("span", { className: "step-icon", text: step.icon }),
+            createElement("span", { className: "step-title", text: step.title }),
+          ]),
+          createElement("p", { className: "step-summary", text: step.summary }),
+          details,
+        ],
+      );
+      return node;
+    });
+    replaceChildren($("#timeline-grid"), steps);
+  } catch (error) {
+    console.error("Timeline load error:", error);
+  }
+}
+
+function appendDetailList(parent, label, items = []) {
+  if (!items.length) return;
+  parent.append(
+    createElement("div", { className: "detail-section" }, [
+      createElement("div", { className: "detail-label", text: label }),
+      createElement("ul", { className: "detail-list" }, items.map(item => createElement("li", { text: item }))),
+    ]),
+  );
 }
 
 function toggleStep(el) {
-  const d = el.querySelector('.step-details');
-  if (d) d.classList.toggle('open');
+  const details = $(".step-details", el);
+  if (!details) return;
+  details.classList.toggle("open");
+  el.setAttribute("aria-expanded", String(details.classList.contains("open")));
 }
 
-// ═══ Quiz ═══
 async function startQuiz() {
-  const difficulty = document.getElementById('quiz-difficulty').value;
-  const numQ = document.getElementById('quiz-count').value;
+  const difficulty = $("#quiz-difficulty").value;
+  const numQ = $("#quiz-count").value;
   try {
-    const res = await fetch(`${API}/api/quiz/generate?difficulty=${difficulty}&num_questions=${numQ}`, { method: 'POST' });
-    currentQuiz = await res.json(); currentQuestionIndex = 0;
-    document.getElementById('quiz-setup').style.display = 'none';
-    document.getElementById('quiz-results').style.display = 'none';
-    document.getElementById('quiz-active').style.display = 'block';
+    currentQuiz = await apiJson(`${API}/api/quiz/generate?difficulty=${encodeURIComponent(difficulty)}&num_questions=${encodeURIComponent(numQ)}`, {
+      method: "POST",
+    });
+    currentQuestionIndex = 0;
+    $("#quiz-setup").style.display = "none";
+    $("#quiz-results").style.display = "none";
+    $("#quiz-active").style.display = "block";
     showQuestion();
-  } catch (e) { console.error('Quiz start error:', e); }
+  } catch (error) {
+    console.error("Quiz start error:", error);
+  }
 }
 
 function showQuestion() {
-  if (!currentQuiz || currentQuestionIndex >= currentQuiz.questions.length) { finishQuiz(); return; }
-  const q = currentQuiz.questions[currentQuestionIndex];
+  if (!currentQuiz || currentQuestionIndex >= currentQuiz.questions.length) {
+    finishQuiz();
+    return;
+  }
+
+  const question = currentQuiz.questions[currentQuestionIndex];
   const total = currentQuiz.questions.length;
-  const progress = ((currentQuestionIndex) / total * 100).toFixed(0);
-  const letters = ['A', 'B', 'C', 'D', 'E', 'F'];
-  document.getElementById('quiz-question-card').innerHTML = `
-    <div class="question-progress">
-      <span>Question ${currentQuestionIndex + 1} of ${total}</span>
-      <div class="progress-bar"><div class="progress-fill" style="width:${progress}%"></div></div>
-      <span class="badge">${q.difficulty}</span>
-    </div>
-    <div class="question-text">${q.question}</div>
-    <div class="options-grid" id="options-grid">
-      ${q.options.map((opt, i) => `
-        <button class="option-btn" data-index="${i}" onclick="submitAnswer(${i})" style="animation:sectionIn 0.3s ease-out ${i*0.06}s both">
-          <span class="option-letter">${letters[i]}</span><span>${opt}</span>
-        </button>
-      `).join('')}
-    </div>
-    <div class="explanation-box" id="explanation-box"></div>
-  `;
+  const progress = ((currentQuestionIndex / total) * 100).toFixed(0);
+  const letters = ["A", "B", "C", "D", "E", "F"];
+  const options = question.options.map((option, index) =>
+    createElement(
+      "button",
+      {
+        className: "option-btn",
+        type: "button",
+        dataset: { index },
+        style: { animation: `sectionIn 0.3s ease-out ${index * 0.06}s both` },
+        on: { click: () => submitAnswer(index) },
+      },
+      [createElement("span", { className: "option-letter", text: letters[index] }), createElement("span", { text: option })],
+    ),
+  );
+
+  replaceChildren($("#quiz-question-card"), [
+    createElement("div", { className: "question-progress" }, [
+      createElement("span", { text: `Question ${currentQuestionIndex + 1} of ${total}` }),
+      createElement("div", { className: "progress-bar" }, [
+        createElement("div", { className: "progress-fill", style: { width: `${progress}%` } }),
+      ]),
+      createElement("span", { className: "badge", text: question.difficulty }),
+    ]),
+    createElement("div", { className: "question-text", text: question.question }),
+    createElement("div", { className: "options-grid", id: "options-grid" }, options),
+    createElement("div", { className: "explanation-box", id: "explanation-box" }),
+  ]);
 }
 
 async function submitAnswer(selectedIndex) {
-  const q = currentQuiz.questions[currentQuestionIndex];
-  document.querySelectorAll('.option-btn').forEach(btn => btn.classList.add('disabled'));
+  const question = currentQuiz.questions[currentQuestionIndex];
+  $$(".option-btn").forEach(button => button.classList.add("disabled"));
   try {
-    const res = await fetch(`${API}/api/quiz/answer?session_id=${currentQuiz.id}&question_id=${q.id}&selected_answer=${selectedIndex}`, { method: 'POST' });
-    const result = await res.json();
-    document.querySelectorAll('.option-btn').forEach(btn => {
-      const idx = parseInt(btn.dataset.index);
-      if (idx === result.correct_answer) btn.classList.add('correct');
-      else if (idx === selectedIndex && !result.is_correct) btn.classList.add('incorrect');
+    const result = await apiJson(
+      `${API}/api/quiz/answer?session_id=${encodeURIComponent(currentQuiz.id)}&question_id=${encodeURIComponent(question.id)}&selected_answer=${selectedIndex}`,
+      { method: "POST" },
+    );
+    $$(".option-btn").forEach(button => {
+      const index = Number.parseInt(button.dataset.index, 10);
+      if (index === result.correct_answer) button.classList.add("correct");
+      else if (index === selectedIndex && !result.is_correct) button.classList.add("incorrect");
     });
-    const expBox = document.getElementById('explanation-box');
-    expBox.innerHTML = `<strong>${result.is_correct ? '✅ Correct!' : '❌ Incorrect'}</strong> — ${result.explanation}<br><span style="color:#60a5fa">+${result.points_earned} points</span>`;
-    expBox.classList.add('visible');
-    setTimeout(() => { currentQuestionIndex++; showQuestion(); }, 2500);
-  } catch (e) { console.error('Answer error:', e); }
+    const expBox = $("#explanation-box");
+    replaceChildren(expBox, [
+      createElement("strong", { text: result.is_correct ? "Correct!" : "Incorrect" }),
+      document.createTextNode(` - ${result.explanation}`),
+      document.createElement("br"),
+      createElement("span", { text: `+${result.points_earned} points`, style: { color: "#60a5fa" } }),
+    ]);
+    expBox.classList.add("visible");
+    setTimeout(() => {
+      currentQuestionIndex += 1;
+      showQuestion();
+    }, 2500);
+  } catch (error) {
+    console.error("Answer error:", error);
+  }
 }
 
 async function finishQuiz() {
   try {
-    const res = await fetch(`${API}/api/quiz/complete/${currentQuiz.id}`, { method: 'POST' });
-    const result = await res.json();
-    document.getElementById('quiz-active').style.display = 'none';
-    document.getElementById('quiz-results').style.display = 'block';
+    const result = await apiJson(`${API}/api/quiz/complete/${encodeURIComponent(currentQuiz.id)}`, { method: "POST" });
+    $("#quiz-active").style.display = "none";
+    $("#quiz-results").style.display = "block";
+
     const passed = result.score_percent >= 70;
-    document.getElementById('quiz-result-card').innerHTML = `
-      <div style="font-size:3.5rem;margin-bottom:0.75rem">${passed ? '🎉' : '📚'}</div>
-      <div class="result-score">${result.score_percent}%</div>
-      <p style="color:var(--text-2);margin-bottom:0.5rem">${result.correct_count} of ${result.total_count} correct — ${result.xp_awarded} XP earned</p>
-      <p style="font-size:1.1rem;margin-bottom:1.25rem">${passed ? 'Great job! You passed!' : "Keep learning — you'll get it next time!"}</p>
-      ${result.badges_earned?.length ? `<div class="result-badges">${result.badges_earned.map(b => `<span class="badge">🏅 ${b}</span>`).join('')}</div>` : ''}
-      <button class="btn btn-primary" style="margin-top:1.5rem" onclick="resetQuiz()">Take Another Quiz</button>
-    `;
-  } catch (e) { console.error('Quiz finish error:', e); }
+    const children = [
+      createElement("div", { text: passed ? "Passed" : "Keep Learning", style: { fontSize: "2rem", marginBottom: "0.75rem", fontWeight: "800" } }),
+      createElement("div", { className: "result-score", text: `${result.score_percent}%` }),
+      createElement("p", {
+        text: `${result.correct_count} of ${result.total_count} correct - ${result.xp_awarded} XP earned`,
+        style: { color: "var(--text-2)", marginBottom: "0.5rem" },
+      }),
+      createElement("p", {
+        text: passed ? "Great job! You passed." : "Keep learning. You will get it next time.",
+        style: { fontSize: "1.1rem", marginBottom: "1.25rem" },
+      }),
+    ];
+
+    if (result.badges_earned?.length) {
+      children.push(
+        createElement(
+          "div",
+          { className: "result-badges" },
+          result.badges_earned.map(badge => createElement("span", { className: "badge", text: badge })),
+        ),
+      );
+    }
+
+    children.push(
+      createElement("button", {
+        className: "btn btn-primary",
+        type: "button",
+        text: "Take Another Quiz",
+        style: { marginTop: "1.5rem" },
+        on: { click: resetQuiz },
+      }),
+    );
+    replaceChildren($("#quiz-result-card"), children);
+  } catch (error) {
+    console.error("Quiz finish error:", error);
+  }
 }
 
 function resetQuiz() {
-  currentQuiz = null; currentQuestionIndex = 0;
-  document.getElementById('quiz-setup').style.display = 'block';
-  document.getElementById('quiz-active').style.display = 'none';
-  document.getElementById('quiz-results').style.display = 'none';
+  currentQuiz = null;
+  currentQuestionIndex = 0;
+  $("#quiz-setup").style.display = "block";
+  $("#quiz-active").style.display = "none";
+  $("#quiz-results").style.display = "none";
 }
 
-// ═══ Readiness ═══
 async function checkReadiness() {
   const payload = {
-    age: parseInt(document.getElementById('readiness-age').value) || 18,
-    state: document.getElementById('readiness-state').value,
-    is_registered: document.getElementById('readiness-registered').checked,
-    knows_polling_location: document.getElementById('readiness-polling').checked,
-    has_valid_id: document.getElementById('readiness-id').checked,
-    understands_ballot: document.getElementById('readiness-ballot').checked,
+    age: Number.parseInt($("#readiness-age").value, 10) || 18,
+    state: $("#readiness-state").value,
+    is_registered: $("#readiness-registered").checked,
+    knows_polling_location: $("#readiness-polling").checked,
+    has_valid_id: $("#readiness-id").checked,
+    understands_ballot: $("#readiness-ballot").checked,
   };
   try {
-    const res = await fetch(`${API}/api/timeline/readiness`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-    const result = await res.json();
-    const scoreClass = result.score >= 80 ? 'high' : result.score >= 50 ? 'medium' : 'low';
-    const el = document.getElementById('readiness-result');
-    el.style.display = 'block';
-    el.innerHTML = `
-      <div class="readiness-score ${scoreClass}">${result.score}%</div>
-      <p style="font-size:1.2rem;margin-bottom:1.25rem;font-weight:600">${result.status}</p>
-      <div style="text-align:left;max-width:500px;margin:0 auto">
-        <h3 style="margin-bottom:0.75rem">📋 Your Checklist</h3>
-        ${Object.entries(result.checklist).map(([k, v]) => `
-          <div style="display:flex;align-items:center;gap:0.5rem;padding:0.35rem 0;color:var(--text-2);font-size:0.92rem">
-            <span style="font-size:1.1rem">${v ? '✅' : '❌'}</span><span>${k}</span>
-          </div>
-        `).join('')}
-        ${result.recommendations.length ? `
-          <h3 style="margin:1.25rem 0 0.5rem">💡 Recommendations</h3>
-          ${result.recommendations.map(r => `<p style="color:var(--text-2);padding:0.2rem 0;font-size:0.88rem">→ ${r}</p>`).join('')}
-        ` : ''}
-      </div>
-    `;
-  } catch (e) { console.error('Readiness error:', e); }
+    const result = await apiJson(`${API}/api/timeline/readiness`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const scoreClass = result.score >= 80 ? "high" : result.score >= 50 ? "medium" : "low";
+    const checklist = Object.entries(result.checklist).map(([key, value]) =>
+      createElement("div", { style: { display: "flex", alignItems: "center", gap: "0.5rem", padding: "0.35rem 0", color: "var(--text-2)", fontSize: "0.92rem" } }, [
+        createElement("span", { text: value ? "Done" : "Needed", style: { fontWeight: "700", minWidth: "64px" } }),
+        createElement("span", { text: key }),
+      ]),
+    );
+    const children = [
+      createElement("div", { className: `readiness-score ${scoreClass}`, text: `${result.score}%` }),
+      createElement("p", { text: result.status, style: { fontSize: "1.2rem", marginBottom: "1.25rem", fontWeight: "600" } }),
+      createElement("div", { style: { textAlign: "left", maxWidth: "500px", margin: "0 auto" } }, [
+        createElement("h3", { text: "Your Checklist", style: { marginBottom: "0.75rem" } }),
+        ...checklist,
+      ]),
+    ];
+
+    if (result.recommendations.length) {
+      children[2].append(
+        createElement("h3", { text: "Recommendations", style: { margin: "1.25rem 0 0.5rem" } }),
+        ...result.recommendations.map(recommendation =>
+          createElement("p", {
+            text: `- ${recommendation}`,
+            style: { color: "var(--text-2)", padding: "0.2rem 0", fontSize: "0.88rem" },
+          }),
+        ),
+      );
+    }
+
+    const el = $("#readiness-result");
+    el.style.display = "block";
+    replaceChildren(el, children);
+  } catch (error) {
+    console.error("Readiness error:", error);
+  }
 }
 
-// ═══ Init ═══
+function attachEvents() {
+  $$(".nav-tab").forEach(tab => {
+    tab.addEventListener("click", () => switchTab(tab.dataset.section));
+    tab.addEventListener("keydown", event => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        switchTab(tab.dataset.section);
+      }
+    });
+  });
+
+  $$("[data-action]").forEach(control => {
+    control.addEventListener("click", () => {
+      const action = control.dataset.action;
+      if (action === "start-quiz") startQuiz();
+      if (action === "check-readiness") checkReadiness();
+      if (action === "send-message") sendMessage();
+      if (action === "suggestion") sendSuggestion(control.dataset.suggestion || "");
+      if (action?.startsWith("switch:")) switchTab(action.replace("switch:", ""));
+    });
+  });
+}
+
+attachEvents();
 loadDashboard();

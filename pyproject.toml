@@ -9,12 +9,21 @@ testpaths = ["backend/tests"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
-addopts = "-v --tb=short --cov=backend --cov-report=term-missing --cov-fail-under=70"
+addopts = "-v --tb=short -p no:cacheprovider --cov=backend --cov-report=term-missing --cov-fail-under=70"
+asyncio_default_fixture_loop_scope = "function"
+cache_dir = "backend/.pytest_cache"
 
 [tool.ruff]
 target-version = "py312"
 src = ["."]
 line-length = 120
+exclude = [
+    ".git",
+    ".pytest_cache",
+    ".ruff_cache",
+    "backend/pytest-cache-files-*",
+    "venv",
+]
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "N", "B", "S", "UP", "ANN", "SIM"]

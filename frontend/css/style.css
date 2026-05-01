@@ -1,6 +1,4 @@
 /* VoteWise Premium Design System */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
-
 :root {
   --primary: #3b82f6; --primary-dark: #1e3a8a; --secondary: #8b5cf6;
   --accent: #ec4899; --success: #10b981; --warning: #f59e0b; --error: #ef4444;
@@ -17,6 +15,13 @@ html{scroll-behavior:smooth;-webkit-font-smoothing:antialiased}
 body {
   font-family: var(--font); background: var(--bg-base); color: var(--text-1);
   line-height: 1.6; min-height: 100vh; overflow-x: hidden;
+}
+
+#particle-canvas {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
 }
 
 /* ── Animated Mesh Background ── */
@@ -102,6 +107,19 @@ a{color:var(--primary);text-decoration:none;transition:0.2s}
 .card:hover {
   border-color:var(--border-glow);transform:translateY(-4px);
   box-shadow:0 12px 40px rgba(99,102,241,0.12),0 0 30px rgba(99,102,241,0.06),inset 0 1px 0 rgba(255,255,255,0.06);
+}
+.action-card {
+  display: block;
+  width: 100%;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+}
+.action-card p {
+  color: var(--text-2);
+  margin-top: 0.5rem;
+  font-size: 0.88rem;
 }
 
 /* ── Sections ── */
@@ -202,7 +220,7 @@ a{color:var(--primary);text-decoration:none;transition:0.2s}
 .step-details.open{display:block;animation:sectionIn 0.3s ease-out}
 .detail-label{font-size:0.75rem;font-weight:700;color:var(--primary);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.25rem}
 .detail-list{list-style:none}.detail-list li{padding:0.2rem 0;color:var(--text-2);font-size:0.88rem}
-.detail-list li::before{content:'→ ';color:var(--primary);font-weight:700}
+.detail-list li::before{content:'- ';color:var(--primary);font-weight:700}
 .detail-section{margin-bottom:0.85rem}
 
 /* ── Quiz ── */

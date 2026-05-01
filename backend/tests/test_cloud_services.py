@@ -23,11 +23,12 @@ class TestCloudLogging:
     def test_log_event_no_crash(self):
         log_event("test_event", {"key": "value"})
 
-    def test_log_latency_returns_ms(self):
+    def test_log_latency_returns_ms(self, monkeypatch):
+        times = iter([100.0, 100.012])
+        monkeypatch.setattr(time, "monotonic", lambda: next(times))
         start = time.monotonic()
-        time.sleep(0.01)
         ms = log_latency("test_op", start)
-        assert ms >= 5
+        assert round(ms, 2) == 12.0
 
 
 class TestCloudStorage:

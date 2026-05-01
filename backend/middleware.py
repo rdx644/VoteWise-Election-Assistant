@@ -10,10 +10,12 @@ import logging
 import time
 import uuid
 from collections import defaultdict
+from collections.abc import Awaitable, Callable
 
 from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from starlette.types import ASGIApp, Receive, Scope, Send
 
 from backend.config import settings
 
@@ -23,13 +25,13 @@ logger = logging.getLogger("votewise.middleware")
 class RateLimitMiddleware:
     """Token bucket rate limiter per IP address."""
 
-    def __init__(self, app, rpm: int = 60, burst: int = 20):
+    def __init__(self, app: ASGIApp, rpm: int = 60, burst: int = 20) -> None:
         self.app = app
         self.rpm = rpm
         self.burst = burst
-        self._buckets: dict[str, list] = defaultdict(lambda: [burst, time.monotonic()])
+        self._buckets: dict[str, tuple[float, float]] = defaultdict(lambda: (float(burst), time.monotonic()))
 
-    async def __call__(self, scope, receive, send):
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
         if scope["type"] != "http" or settings.app_env == "testing":
             await self.app(scope, receive, send)
             return
@@ -50,7 +52,7 @@ class RateLimitMiddleware:
             await response(scope, receive, send)
             return
 
-        self._buckets[client_ip] = [tokens - 1, now]
+        self._buckets[client_ip] = (tokens - 1, now)
         await self.app(scope, receive, send)
 
 
@@ -74,27 +76,30 @@ def register_middleware(app: FastAPI) -> None:
 
     # Security headers + request logging
     @app.middleware("http")
-    async def security_and_logging(request: Request, call_next) -> Response:
+    async def security_and_logging(request: Request, call_next: Callable[[Request], Awaitable[Response]]) -> Response:
         request_id = str(uuid.uuid4())[:8]
         start = time.monotonic()
 
         response = await call_next(request)
 
-        # Security headers
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["X-Frame-Options"] = "DENY"
-        response.headers["X-XSS-Protection"] = "1; mode=block"
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+        response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=(), payment=()"
+        response.headers["Cross-Origin-Opener-Policy"] = "same-origin"
+        response.headers["Cross-Origin-Resource-Policy"] = "same-origin"
         response.headers["X-Request-ID"] = request_id
         response.headers["Content-Security-Policy"] = (
             "default-src 'self'; "
-            "script-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+            "script-src 'self'; "
             "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
             "font-src 'self' https://fonts.gstatic.com; "
             "img-src 'self' data: https:; "
             "connect-src 'self' ws: wss:; "
             "frame-ancestors 'none'"
         )
+        if settings.is_production:
+            response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
 
         elapsed = round((time.monotonic() - start) * 1000, 2)
         response.headers["X-Response-Time"] = f"{elapsed}ms"
