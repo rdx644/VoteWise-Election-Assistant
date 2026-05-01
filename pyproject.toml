@@ -9,7 +9,7 @@ testpaths = ["backend/tests"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
-addopts = "-v --tb=short -p no:cacheprovider --cov=backend --cov-report=term-missing --cov-fail-under=70"
+addopts = "-v --tb=short -p no:cacheprovider --cov=backend --cov-report=term-missing --cov-fail-under=80"
 asyncio_default_fixture_loop_scope = "function"
 cache_dir = "backend/.pytest_cache"
 
@@ -26,14 +26,31 @@ exclude = [
 ]
 
 [tool.ruff.lint]
-select = ["E", "F", "W", "I", "N", "B", "S", "UP", "ANN", "SIM"]
+select = [
+    "E",    # pycodestyle errors
+    "F",    # pyflakes
+    "W",    # pycodestyle warnings
+    "I",    # isort
+    "N",    # pep8-naming
+    "B",    # flake8-bugbear
+    "S",    # flake8-bandit (security)
+    "UP",   # pyupgrade
+    "ANN",  # annotations
+    "SIM",  # simplify
+    "G",    # flake8-logging-format
+    "RUF",  # ruff-specific rules
+    "C4",   # flake8-comprehensions
+    "PT",   # flake8-pytest-style
+]
 ignore = [
     "ANN001", "ANN002", "ANN003", "ANN201", "ANN202",
     "ANN204", "ANN206", "S104", "S311", "B008",
+    "G004",   # f-strings in logging (already migrated to %-format)
 ]
 
 [tool.ruff.lint.per-file-ignores]
-"backend/tests/*" = ["S101", "ANN"]
+"backend/tests/*" = ["S101", "ANN", "PT"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["backend"]
+

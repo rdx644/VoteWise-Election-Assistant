@@ -57,7 +57,11 @@ class TestApiEdgeCases:
         csp = res.headers["content-security-policy"]
         assert "script-src 'self'" in csp
         assert "'unsafe-inline'" not in csp.split("script-src", 1)[1].split(";", 1)[0]
-        assert res.headers["permissions-policy"] == "camera=(), microphone=(), geolocation=(), payment=()"
+        pp = res.headers["permissions-policy"]
+        assert "camera=()" in pp
+        assert "microphone=()" in pp
+        assert "geolocation=()" in pp
+        assert "payment=()" in pp
         assert res.headers["cross-origin-opener-policy"] == "same-origin"
 
     def test_user_update_and_delete_not_found_paths(self, client: TestClient) -> None:
@@ -68,7 +72,8 @@ class TestApiEdgeCases:
         assert client.put("/api/users/missing", json={"state": "Nowhere"}).status_code == 404
         assert client.delete("/api/users/missing").status_code == 404
 
-    def test_chat_session_routes(self, client: TestClient) -> None:
+    def test_chat_session_routes(self, client: TestClient, monkeypatch) -> None:
+        monkeypatch.setattr("backend.gemini_service._get_model", lambda: None)
         created = client.post("/api/chat", json={"message": "Tell me about ballots", "user_id": "edge-user"}).json()
         session_id = created["session_id"]
 

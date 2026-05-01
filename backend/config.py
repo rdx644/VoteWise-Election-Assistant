@@ -29,7 +29,7 @@ class Settings(BaseSettings):
     # --- App Config ---
     app_env: str = "development"
     app_port: int = 8080
-    app_host: str = "0.0.0.0"  # noqa: S104
+    app_host: str = "0.0.0.0"
     log_level: str = "INFO"
     app_title: str = "VoteWise — AI Election Education Platform"
     app_version: str = "1.0.0"

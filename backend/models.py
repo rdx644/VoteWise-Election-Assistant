@@ -6,13 +6,13 @@ from __future__ import annotations
 
 import uuid
 from datetime import UTC, datetime
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 
 from pydantic import BaseModel, Field, ValidationInfo, field_validator
 
 
-class ElectionType(str, Enum):
+class ElectionType(StrEnum):
     GENERAL = "general"
     PRIMARY = "primary"
     MIDTERM = "midterm"
@@ -20,19 +20,19 @@ class ElectionType(str, Enum):
     SPECIAL = "special"
 
 
-class LearningLevel(str, Enum):
+class LearningLevel(StrEnum):
     BEGINNER = "beginner"
     INTERMEDIATE = "intermediate"
     ADVANCED = "advanced"
 
 
-class QuizDifficulty(str, Enum):
+class QuizDifficulty(StrEnum):
     EASY = "easy"
     MEDIUM = "medium"
     HARD = "hard"
 
 
-class ElectionPhase(str, Enum):
+class ElectionPhase(StrEnum):
     VOTER_REGISTRATION = "voter_registration"
     CANDIDATE_FILING = "candidate_filing"
     CAMPAIGNING = "campaigning"
@@ -44,7 +44,7 @@ class ElectionPhase(str, Enum):
     INAUGURATION = "inauguration"
 
 
-class ChatRole(str, Enum):
+class ChatRole(StrEnum):
     USER = "user"
     ASSISTANT = "assistant"
     SYSTEM = "system"

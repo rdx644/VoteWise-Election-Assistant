@@ -8,6 +8,7 @@ Google Gemini 2.0 Flash with structured system prompts and conversation history.
 from __future__ import annotations
 
 import logging
+import random
 import time
 
 from backend.cloud_logging import log_event, log_latency
@@ -209,7 +210,7 @@ async def generate_chat_response(
         )
 
     except Exception as e:  # pragma: no cover
-        logger.error(f"Gemini generation failed: {e}")
+        logger.error("Gemini generation failed: %s", e)
         log_event("chat_error", {"error": str(e)}, severity="ERROR")
         return ChatResponse(
             session_id=session.id,
@@ -256,7 +257,6 @@ def _extract_topics(message: str) -> list[str]:
 
 def _get_civic_tip() -> str:
     """Return a random civic engagement tip."""
-    import random
 
     tips = [
         "Visit vote.gov to check your voter registration status!",
@@ -268,4 +268,4 @@ def _get_civic_tip() -> str:
         "Review a sample ballot before heading to the polls.",
         "Every election matters — local races shape your daily life!",
     ]
-    return random.choice(tips)  # noqa: S311
+    return random.choice(tips)

@@ -151,9 +151,21 @@ class TestExceptions:
         d = err.to_dict()
         assert d["error"] == "test_err"
 
+    def test_base_error_message(self):
+        err = VoteWiseError("Something went wrong")
+        assert str(err) == "Something went wrong"
+
+    def test_base_error_default_status(self):
+        err = VoteWiseError("test")
+        assert err.status_code == 500
+
     def test_entity_not_found(self):
         err = EntityNotFoundError("User", "123")
         assert err.status_code == 404
+
+    def test_entity_not_found_message(self):
+        err = EntityNotFoundError("Session", "abc")
+        assert "Session" in str(err)
 
     def test_ai_generation_error(self):
         err = AIGenerationError("timeout")
@@ -171,3 +183,100 @@ class TestExceptions:
     def test_configuration_error(self):
         err = ConfigurationError("api_key", "missing")
         assert err.status_code == 500
+
+    def test_error_to_dict_has_message(self):
+        err = VoteWiseError("test error", error_code="test")
+        d = err.to_dict()
+        assert "message" in d
+        assert "error" in d
+
+
+class TestQuizEdgeCases:
+    def test_quiz_with_max_questions(self):
+        session = generate_quiz(difficulty=QuizDifficulty.EASY, num_questions=10)
+        assert len(session.questions) <= 10
+
+    def test_quiz_with_user_id(self):
+        session = generate_quiz(user_id="test-user", difficulty=QuizDifficulty.MEDIUM, num_questions=2)
+        assert session.user_id == "test-user"
+
+    def test_complete_quiz_without_answers(self):
+        session = generate_quiz(difficulty=QuizDifficulty.EASY, num_questions=2)
+        result = complete_quiz(session.id)
+        assert result.score_percent == 0.0
+
+    def test_quiz_invalid_question_id(self):
+        session = generate_quiz(difficulty=QuizDifficulty.EASY, num_questions=1)
+        result = submit_answer(session.id, "nonexistent-q", 0)
+        assert "error" in result
+
+    def test_quiz_all_difficulties(self):
+        for diff in QuizDifficulty:
+            session = generate_quiz(difficulty=diff, num_questions=1)
+            assert len(session.questions) >= 1
+
+
+class TestDatabaseOperations:
+    def test_database_list_users(self):
+        from backend.database import db
+
+        users = db.list_users()
+        assert isinstance(users, list)
+
+    def test_database_create_and_get_user(self):
+        from backend.database import db
+
+        user = UserProfile(name="DB Test User")
+        created = db.create_user(user)
+        fetched = db.get_user(created.id)
+        assert fetched is not None
+        assert fetched.name == "DB Test User"
+
+    def test_database_get_nonexistent_user(self):
+        from backend.database import db
+
+        result = db.get_user("nonexistent-user-xyz")
+        assert result is None
+
+    def test_database_delete_user(self):
+        from backend.database import db
+
+        user = UserProfile(name="To Delete")
+        created = db.create_user(user)
+        assert db.delete_user(created.id) is True
+        assert db.get_user(created.id) is None
+
+    def test_database_delete_nonexistent(self):
+        from backend.database import db
+
+        result = db.delete_user("nonexistent-user-xyz")
+        assert result is False
+
+
+class TestReadinessEdgeCases:
+    def test_readiness_partial_score(self):
+        req = ReadinessCheckRequest(age=21, is_registered=True, has_valid_id=True)
+        result = compute_readiness(req)
+        assert 0 < result.score < 100
+
+    def test_readiness_has_recommendations(self):
+        req = ReadinessCheckRequest(age=20)
+        result = compute_readiness(req)
+        assert len(result.recommendations) > 0
+
+    def test_readiness_all_fields(self):
+        req = ReadinessCheckRequest(
+            age=30,
+            state="Texas",
+            is_registered=True,
+            knows_polling_location=True,
+            has_valid_id=True,
+            understands_ballot=True,
+        )
+        result = compute_readiness(req)
+        assert result.score == 100.0
+
+    def test_readiness_checklist_populated(self):
+        req = ReadinessCheckRequest(age=25, is_registered=True)
+        result = compute_readiness(req)
+        assert len(result.checklist) > 0

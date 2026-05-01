@@ -1,13 +1,14 @@
 """
 Database service with dual-mode support (InMemory + Firestore).
 
-Pre-loaded with demo user data for the prototype.
+Provides a unified ``DatabaseProtocol`` interface so callers are decoupled
+from the backing store.  Pre-loaded with demo user data for the prototype.
 """
 
 from __future__ import annotations
 
 import logging
-from typing import Protocol, runtime_checkable
+from typing import Any, Protocol, runtime_checkable
 
 from backend.config import settings
 from backend.models import (
@@ -22,24 +23,64 @@ logger = logging.getLogger("votewise.database")
 
 @runtime_checkable
 class DatabaseProtocol(Protocol):
-    """Abstract interface for all database implementations."""
+    """Abstract interface for all database implementations.
 
-    def get_user(self, user_id: str) -> UserProfile | None: ...
-    def list_users(self) -> list[UserProfile]: ...
-    def create_user(self, user: UserProfile) -> UserProfile: ...
-    def update_user(self, user_id: str, data: dict) -> UserProfile | None: ...
-    def delete_user(self, user_id: str) -> bool: ...
+    Every concrete database (InMemory, Firestore, etc.) must satisfy this
+    protocol so the rest of the application can swap implementations
+    without code changes.
+    """
 
-    def get_chat_session(self, session_id: str) -> ChatSession | None: ...
-    def save_chat_session(self, session: ChatSession) -> ChatSession: ...
-    def list_chat_sessions(self, user_id: str) -> list[ChatSession]: ...
+    def get_user(self, user_id: str) -> UserProfile | None:
+        """Retrieve a user by ID, or ``None`` if not found."""
+        ...
 
-    def get_quiz_session(self, session_id: str) -> QuizSession | None: ...
-    def save_quiz_session(self, session: QuizSession) -> QuizSession: ...
-    def list_quiz_sessions(self, user_id: str) -> list[QuizSession]: ...
+    def list_users(self) -> list[UserProfile]:
+        """Return all registered users."""
+        ...
 
-    def get_user_progress(self, user_id: str) -> UserProgress | None: ...
-    def save_user_progress(self, progress: UserProgress) -> UserProgress: ...
+    def create_user(self, user: UserProfile) -> UserProfile:
+        """Persist a new user and return it."""
+        ...
+
+    def update_user(self, user_id: str, data: dict[str, Any]) -> UserProfile | None:
+        """Partially update a user. Returns ``None`` if not found."""
+        ...
+
+    def delete_user(self, user_id: str) -> bool:
+        """Delete a user. Returns ``True`` if the user existed."""
+        ...
+
+    def get_chat_session(self, session_id: str) -> ChatSession | None:
+        """Retrieve a chat session by ID."""
+        ...
+
+    def save_chat_session(self, session: ChatSession) -> ChatSession:
+        """Create or update a chat session."""
+        ...
+
+    def list_chat_sessions(self, user_id: str) -> list[ChatSession]:
+        """List chat sessions belonging to a user."""
+        ...
+
+    def get_quiz_session(self, session_id: str) -> QuizSession | None:
+        """Retrieve a quiz session by ID."""
+        ...
+
+    def save_quiz_session(self, session: QuizSession) -> QuizSession:
+        """Create or update a quiz session."""
+        ...
+
+    def list_quiz_sessions(self, user_id: str) -> list[QuizSession]:
+        """List quiz sessions belonging to a user."""
+        ...
+
+    def get_user_progress(self, user_id: str) -> UserProgress | None:
+        """Retrieve learning progress for a user."""
+        ...
+
+    def save_user_progress(self, progress: UserProgress) -> UserProgress:
+        """Create or update user progress."""
+        ...
 
 
 # ── Demo Data ──
@@ -78,7 +119,12 @@ DEMO_USERS: list[UserProfile] = [
         xp_points=550,
         quizzes_completed=12,
         quizzes_passed=11,
-        topics_explored=["voter_registration", "electoral_college", "gerrymandering", "voting_rights"],
+        topics_explored=[
+            "voter_registration",
+            "electoral_college",
+            "gerrymandering",
+            "voting_rights",
+        ],
         civic_readiness_score=95.0,
         badges=["First Quiz", "Quiz Master", "Civic Champion", "Election Expert"],
     ),
@@ -89,70 +135,92 @@ DEMO_USERS: list[UserProfile] = [
 
 
 class InMemoryDatabase:
-    """Thread-safe in-memory data store with demo data."""
+    """Thread-safe in-memory data store seeded with demo data.
 
-    def __init__(self):
-        self.users: dict[str, UserProfile] = {}
-        self.chat_sessions: dict[str, ChatSession] = {}
-        self.quiz_sessions: dict[str, QuizSession] = {}
-        self.user_progress: dict[str, UserProgress] = {}
-        self._load_demo_data()
+    Used during development and testing.  All data lives in Python dicts
+    and is lost when the process restarts.
+    """
 
-    def _load_demo_data(self):
-        for u in DEMO_USERS:
-            self.users[u.id] = u.model_copy()
-        logger.info(f"Loaded {len(self.users)} demo users")
+    def __init__(self) -> None:
+        self._users: dict[str, UserProfile] = {}
+        self._chat_sessions: dict[str, ChatSession] = {}
+        self._quiz_sessions: dict[str, QuizSession] = {}
+        self._user_progress: dict[str, UserProgress] = {}
+        self._seed_demo_data()
 
-    # User CRUD
+    def _seed_demo_data(self) -> None:
+        """Populate the store with demo user records."""
+        for user in DEMO_USERS:
+            self._users[user.id] = user.model_copy()
+        logger.info("Loaded %d demo users", len(self._users))
+
+    # ── User CRUD ──
+
     def get_user(self, user_id: str) -> UserProfile | None:
-        return self.users.get(user_id)
+        """Retrieve a user by their unique identifier."""
+        return self._users.get(user_id)
 
     def list_users(self) -> list[UserProfile]:
-        return list(self.users.values())
+        """Return every user in the store."""
+        return list(self._users.values())
 
     def create_user(self, user: UserProfile) -> UserProfile:
-        self.users[user.id] = user
+        """Insert a new user record."""
+        self._users[user.id] = user
         return user
 
-    def update_user(self, user_id: str, data: dict) -> UserProfile | None:
-        if user_id not in self.users:
+    def update_user(self, user_id: str, data: dict[str, Any]) -> UserProfile | None:
+        """Merge *data* into an existing user. Returns ``None`` on miss."""
+        if user_id not in self._users:
             return None
-        current = self.users[user_id]
+        current = self._users[user_id]
         updated = current.model_copy(update=data)
-        self.users[user_id] = updated
+        self._users[user_id] = updated
         return updated
 
     def delete_user(self, user_id: str) -> bool:
-        return self.users.pop(user_id, None) is not None
+        """Remove a user. Returns ``True`` if the user was present."""
+        return self._users.pop(user_id, None) is not None
 
-    # Chat Sessions
+    # ── Chat Sessions ──
+
     def get_chat_session(self, session_id: str) -> ChatSession | None:
-        return self.chat_sessions.get(session_id)
+        """Retrieve a chat session by ID."""
+        return self._chat_sessions.get(session_id)
 
     def save_chat_session(self, session: ChatSession) -> ChatSession:
-        self.chat_sessions[session.id] = session
+        """Persist a chat session (insert or update)."""
+        self._chat_sessions[session.id] = session
         return session
 
     def list_chat_sessions(self, user_id: str) -> list[ChatSession]:
-        return [s for s in self.chat_sessions.values() if s.user_id == user_id]
+        """Return all chat sessions for a given user."""
+        return [s for s in self._chat_sessions.values() if s.user_id == user_id]
 
-    # Quiz Sessions
+    # ── Quiz Sessions ──
+
     def get_quiz_session(self, session_id: str) -> QuizSession | None:
-        return self.quiz_sessions.get(session_id)
+        """Retrieve a quiz session by ID."""
+        return self._quiz_sessions.get(session_id)
 
     def save_quiz_session(self, session: QuizSession) -> QuizSession:
-        self.quiz_sessions[session.id] = session
+        """Persist a quiz session (insert or update)."""
+        self._quiz_sessions[session.id] = session
         return session
 
     def list_quiz_sessions(self, user_id: str) -> list[QuizSession]:
-        return [s for s in self.quiz_sessions.values() if s.user_id == user_id]
+        """Return all quiz sessions for a given user."""
+        return [s for s in self._quiz_sessions.values() if s.user_id == user_id]
 
-    # User Progress
+    # ── User Progress ──
+
     def get_user_progress(self, user_id: str) -> UserProgress | None:
-        return self.user_progress.get(user_id)
+        """Retrieve learning progress for a specific user."""
+        return self._user_progress.get(user_id)
 
     def save_user_progress(self, progress: UserProgress) -> UserProgress:
-        self.user_progress[progress.user_id] = progress
+        """Create or update a user's learning progress."""
+        self._user_progress[progress.user_id] = progress
         return progress
 
 
@@ -160,69 +228,94 @@ class InMemoryDatabase:
 
 
 class FirestoreDatabase:  # pragma: no cover
-    """Google Cloud Firestore database implementation."""
+    """Google Cloud Firestore database implementation.
 
-    def __init__(self):
+    Used in production on Google Cloud Run.  Requires a valid
+    ``GOOGLE_CLOUD_PROJECT`` environment variable.
+    """
+
+    def __init__(self) -> None:
         from google.cloud import firestore
 
-        self.client = firestore.Client(project=settings.google_cloud_project)
+        self._client = firestore.Client(project=settings.google_cloud_project)
         logger.info("Firestore database initialized")
 
+    # ── User CRUD ──
+
     def get_user(self, user_id: str) -> UserProfile | None:
-        doc = self.client.collection("users").document(user_id).get()
+        """Retrieve a user document from the ``users`` collection."""
+        doc = self._client.collection("users").document(user_id).get()
         return UserProfile(**doc.to_dict()) if doc.exists else None
 
     def list_users(self) -> list[UserProfile]:
-        return [UserProfile(**d.to_dict()) for d in self.client.collection("users").stream()]
+        """Stream all user documents."""
+        return [UserProfile(**d.to_dict()) for d in self._client.collection("users").stream()]
 
     def create_user(self, user: UserProfile) -> UserProfile:
-        self.client.collection("users").document(user.id).set(user.model_dump(mode="json"))
+        """Write a new user document."""
+        self._client.collection("users").document(user.id).set(user.model_dump(mode="json"))
         return user
 
-    def update_user(self, user_id: str, data: dict) -> UserProfile | None:
-        ref = self.client.collection("users").document(user_id)
+    def update_user(self, user_id: str, data: dict[str, Any]) -> UserProfile | None:
+        """Partially update an existing user document."""
+        ref = self._client.collection("users").document(user_id)
         if not ref.get().exists:
             return None
         ref.update(data)
         return UserProfile(**ref.get().to_dict())
 
     def delete_user(self, user_id: str) -> bool:
-        ref = self.client.collection("users").document(user_id)
+        """Delete a user document. Returns ``True`` on success."""
+        ref = self._client.collection("users").document(user_id)
         if ref.get().exists:
             ref.delete()
             return True
         return False
 
+    # ── Chat Sessions ──
+
     def get_chat_session(self, session_id: str) -> ChatSession | None:
-        doc = self.client.collection("chats").document(session_id).get()
+        """Retrieve a chat session from the ``chats`` collection."""
+        doc = self._client.collection("chats").document(session_id).get()
         return ChatSession(**doc.to_dict()) if doc.exists else None
 
     def save_chat_session(self, session: ChatSession) -> ChatSession:
-        self.client.collection("chats").document(session.id).set(session.model_dump(mode="json"))
+        """Persist a chat session document."""
+        self._client.collection("chats").document(session.id).set(session.model_dump(mode="json"))
         return session
 
     def list_chat_sessions(self, user_id: str) -> list[ChatSession]:
-        docs = self.client.collection("chats").where("user_id", "==", user_id).stream()
+        """List all chat sessions for a given user."""
+        docs = self._client.collection("chats").where("user_id", "==", user_id).stream()
         return [ChatSession(**d.to_dict()) for d in docs]
 
+    # ── Quiz Sessions ──
+
     def get_quiz_session(self, session_id: str) -> QuizSession | None:
-        doc = self.client.collection("quizzes").document(session_id).get()
+        """Retrieve a quiz session from the ``quizzes`` collection."""
+        doc = self._client.collection("quizzes").document(session_id).get()
         return QuizSession(**doc.to_dict()) if doc.exists else None
 
     def save_quiz_session(self, session: QuizSession) -> QuizSession:
-        self.client.collection("quizzes").document(session.id).set(session.model_dump(mode="json"))
+        """Persist a quiz session document."""
+        self._client.collection("quizzes").document(session.id).set(session.model_dump(mode="json"))
         return session
 
     def list_quiz_sessions(self, user_id: str) -> list[QuizSession]:
-        docs = self.client.collection("quizzes").where("user_id", "==", user_id).stream()
+        """List all quiz sessions for a given user."""
+        docs = self._client.collection("quizzes").where("user_id", "==", user_id).stream()
         return [QuizSession(**d.to_dict()) for d in docs]
 
+    # ── User Progress ──
+
     def get_user_progress(self, user_id: str) -> UserProgress | None:
-        doc = self.client.collection("progress").document(user_id).get()
+        """Retrieve user progress from the ``progress`` collection."""
+        doc = self._client.collection("progress").document(user_id).get()
         return UserProgress(**doc.to_dict()) if doc.exists else None
 
     def save_user_progress(self, progress: UserProgress) -> UserProgress:
-        self.client.collection("progress").document(progress.user_id).set(progress.model_dump(mode="json"))
+        """Persist a user progress document."""
+        self._client.collection("progress").document(progress.user_id).set(progress.model_dump(mode="json"))
         return progress
 
 
@@ -230,9 +323,10 @@ class FirestoreDatabase:  # pragma: no cover
 
 
 def _create_database() -> InMemoryDatabase | FirestoreDatabase:
+    """Instantiate the correct database backend based on settings."""
     if settings.use_firestore:  # pragma: no cover
         return FirestoreDatabase()
     return InMemoryDatabase()
 
 
-db = _create_database()
+db: InMemoryDatabase | FirestoreDatabase = _create_database()

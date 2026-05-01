@@ -44,5 +44,5 @@ async def synthesize_speech(
 
         return base64.b64encode(response.audio_content).decode("utf-8")
     except Exception as e:  # pragma: no cover
-        logger.warning(f"TTS synthesis failed: {e}")
+        logger.warning("TTS synthesis failed: %s", e)
         return None

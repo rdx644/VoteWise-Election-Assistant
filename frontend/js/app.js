@@ -1,5 +1,6 @@
 /**
- * VoteWise frontend interactions.
+ * VoteWise — AI Election Education Platform.
+ * Frontend controller for navigation, chat, quiz, timeline, and readiness.
  */
 
 const API = "";
@@ -150,20 +151,27 @@ function animateCounter(el, target, suffix = "") {
   requestAnimationFrame(tick);
 }
 
+function announce(message) {
+  const region = $("#aria-live-region");
+  if (region) region.textContent = message;
+}
+
 function switchTab(section) {
   $$(".nav-tab").forEach(tab => {
-    tab.classList.remove("active");
-    tab.setAttribute("aria-selected", "false");
+    const isActive = tab.dataset.section === section;
+    tab.classList.toggle("active", isActive);
+    tab.setAttribute("aria-selected", String(isActive));
+    tab.setAttribute("tabindex", isActive ? "0" : "-1");
   });
   $$(".section").forEach(sectionNode => sectionNode.classList.remove("active"));
 
-  const tab = $(`[data-section="${section}"]`);
-  if (tab) {
-    tab.classList.add("active");
-    tab.setAttribute("aria-selected", "true");
+  const panel = document.getElementById(`panel-${section}`);
+  if (panel) {
+    panel.classList.add("active");
+    panel.focus();
   }
-  const sectionNode = document.getElementById(section);
-  if (sectionNode) sectionNode.classList.add("active");
+
+  announce(`Navigated to ${section} section`);
 
   if (section === "dashboard") loadDashboard();
   if (section === "timeline") loadTimeline();
@@ -541,12 +549,22 @@ async function checkReadiness() {
 }
 
 function attachEvents() {
-  $$(".nav-tab").forEach(tab => {
+  const tabs = $$(".nav-tab");
+  tabs.forEach(tab => {
     tab.addEventListener("click", () => switchTab(tab.dataset.section));
     tab.addEventListener("keydown", event => {
       if (event.key === "Enter" || event.key === " ") {
         event.preventDefault();
         switchTab(tab.dataset.section);
+      }
+      // Arrow key navigation between tabs
+      if (event.key === "ArrowRight" || event.key === "ArrowLeft") {
+        event.preventDefault();
+        const currentIndex = tabs.indexOf(tab);
+        const direction = event.key === "ArrowRight" ? 1 : -1;
+        const nextIndex = (currentIndex + direction + tabs.length) % tabs.length;
+        tabs[nextIndex].focus();
+        switchTab(tabs[nextIndex].dataset.section);
       }
     });
   });

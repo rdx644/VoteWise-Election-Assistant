@@ -28,9 +28,9 @@ if settings.is_production and settings.google_cloud_project:  # pragma: no cover
             _bucket = _client.get_bucket(bucket_name)
         except Exception:
             _bucket = _client.create_bucket(bucket_name, location=settings.gcs_location)
-        logger.info(f"Cloud Storage initialized: {bucket_name}")
+        logger.info("Cloud Storage initialized: %s", bucket_name)
     except Exception as e:
-        logger.warning(f"Cloud Storage unavailable: {e}")
+        logger.warning("Cloud Storage unavailable: %s", e)
 
 
 def store_audio(audio_bytes: bytes, topic: str, identifier: str) -> str | None:
@@ -43,7 +43,7 @@ def store_audio(audio_bytes: bytes, topic: str, identifier: str) -> str | None:
         blob.upload_from_string(audio_bytes, content_type="audio/mpeg")
         return f"gs://{_bucket.name}/{blob_path}"
     except Exception as e:
-        logger.warning(f"Audio storage failed: {e}")
+        logger.warning("Audio storage failed: %s", e)
         return None
 
 
@@ -58,7 +58,7 @@ def export_quiz_results(results: list[dict[str, Any]]) -> str | None:
         blob.upload_from_string(json.dumps(results, default=str), content_type="application/json")
         return f"gs://{_bucket.name}/{blob_path}"
     except Exception as e:
-        logger.warning(f"Quiz export failed: {e}")
+        logger.warning("Quiz export failed: %s", e)
         return None
 
 
@@ -73,5 +73,5 @@ def store_analytics_report(report: dict[str, Any]) -> str | None:
         blob.upload_from_string(json.dumps(report, default=str), content_type="application/json")
         return f"gs://{_bucket.name}/{blob_path}"
     except Exception as e:
-        logger.warning(f"Analytics report storage failed: {e}")
+        logger.warning("Analytics report storage failed: %s", e)
         return None

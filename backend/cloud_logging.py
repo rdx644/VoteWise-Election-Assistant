@@ -32,7 +32,7 @@ if settings.is_production and settings.google_cloud_project:  # pragma: no cover
         _cloud_client.setup_logging()
         logger.info("Google Cloud Logging initialized")
     except Exception as e:
-        logger.warning(f"Cloud Logging unavailable: {e}")
+        logger.warning("Cloud Logging unavailable: %s", e)
 
 
 def get_logger(module_name: str) -> logging.Logger:
@@ -53,7 +53,7 @@ def log_event(
         cloud_logger.log_struct(event, severity=severity)
     else:
         log_level = getattr(logging, severity, logging.INFO)
-        logger.log(log_level, f"[{event_type}] {event}")
+        logger.log(log_level, "[%s] %s", event_type, event)
 
 
 def log_latency(

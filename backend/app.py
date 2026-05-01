@@ -12,7 +12,7 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Any
 
-from fastapi import APIRouter, FastAPI, HTTPException
+from fastapi import APIRouter, FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
@@ -36,7 +36,7 @@ FRONTEND_DIR = Path(__file__).resolve().parent.parent / "frontend"
 async def lifespan(app: FastAPI):
     """Application startup and shutdown lifecycle."""
     log_event("app_startup", {"version": settings.app_version, "env": settings.app_env})
-    logger.info(f"VoteWise v{settings.app_version} starting ({settings.app_env})")
+    logger.info("VoteWise v%s starting (%s)", settings.app_version, settings.app_env)
     yield
     log_event("app_shutdown", {"version": settings.app_version})
     logger.info("VoteWise shutting down")
@@ -134,8 +134,8 @@ async def health_check() -> dict[str, Any]:
 
 
 @app.exception_handler(VoteWiseError)
-async def votewise_error_handler(request, exc: VoteWiseError):
-    """Handle custom VoteWise exceptions."""
+async def votewise_error_handler(_request: Request, exc: VoteWiseError) -> JSONResponse:
+    """Handle custom VoteWise exceptions with structured error responses."""
     return JSONResponse(status_code=exc.status_code, content=exc.to_dict())
 
 
@@ -145,11 +145,13 @@ if FRONTEND_DIR.exists():
     app.mount("/static", StaticFiles(directory=str(FRONTEND_DIR)), name="static")
 
     @app.get("/")
-    async def serve_index():
+    async def serve_index() -> FileResponse:
+        """Serve the main single-page application."""
         return FileResponse(str(FRONTEND_DIR / "index.html"))
 
     @app.get("/{path:path}")
-    async def serve_frontend(path: str):
+    async def serve_frontend(path: str) -> FileResponse:
+        """Serve static frontend assets or fall back to index.html."""
         file_path = FRONTEND_DIR / path
         if file_path.exists() and file_path.is_file():
             return FileResponse(str(file_path))

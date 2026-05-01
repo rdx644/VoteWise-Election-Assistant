@@ -23,7 +23,7 @@ if settings.is_production and settings.google_cloud_project:  # pragma: no cover
         _sm_client = secretmanager.SecretManagerServiceClient()
         logger.info("Secret Manager initialized")
     except Exception as e:
-        logger.warning(f"Secret Manager unavailable: {e}")
+        logger.warning("Secret Manager unavailable: %s", e)
 
 
 def _get_env_fallback(secret_id: str) -> str:
@@ -44,7 +44,7 @@ def get_secret(secret_id: str, fallback: str = "") -> str:
             response = _sm_client.access_secret_version(request={"name": name})
             return response.payload.data.decode("UTF-8")
         except Exception as e:
-            logger.warning(f"Secret Manager lookup failed for {secret_id}: {e}")
+            logger.warning("Secret Manager lookup failed for %s: %s", secret_id, e)
 
     env_value = _get_env_fallback(secret_id)
     return env_value or fallback
