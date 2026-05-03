@@ -1,7 +1,7 @@
-## 🌐 Live Demo
+##  Live Demo
 https://votewise-election-assistant-43248167698.us-central1.run.app
 
-# 🗳️ VoteWise — AI Election Education Platform
+#  VoteWise — AI Election Education Platform
 
 > An AI-powered assistant that helps users understand the U.S. election process, timelines, and steps in an interactive and easy-to-follow way.
 
@@ -9,13 +9,13 @@ https://votewise-election-assistant-43248167698.us-central1.run.app
 
 ---
 
-## 📋 Chosen Vertical
+##  Chosen Vertical
 
 **Election Process Education** — Making civic participation accessible through AI-powered interactive learning.
 
 ---
 
-## 🎯 Approach & Solution Logic
+##  Approach & Solution Logic
 
 VoteWise uses **Google Gemini 2.0 Flash** as its core AI engine, combined with a structured election knowledge base to deliver **adaptive, personalized education** about the U.S. election process.
 
@@ -52,18 +52,18 @@ VoteWise uses **Google Gemini 2.0 Flash** as its core AI engine, combined with a
 
 ---
 
-## 🚀 How the Solution Works
+##  How the Solution Works
 
 ### Features
 
 | Feature | Description |
 |---------|-------------|
-| 💬 **AI Chat Assistant** | Gemini-powered contextual Q&A about elections with adaptive complexity |
-| 📅 **Election Timeline** | Interactive 9-step visual journey from registration to inauguration |
-| 🧠 **Adaptive Quizzes** | Multi-difficulty questions with instant feedback, XP, and badges |
-| ✅ **Civic Readiness** | Personalized voter preparation assessment with actionable recommendations |
-| 📊 **Analytics Dashboard** | Engagement metrics, leaderboard, and system health monitoring |
-| 🔊 **Text-to-Speech** | Google Cloud TTS for audio narration of election information |
+| **AI Chat Assistant** | Gemini-powered contextual Q&A about elections with adaptive complexity |
+| **Election Timeline** | Interactive 9-step visual journey from registration to inauguration |
+| **Adaptive Quizzes** | Multi-difficulty questions with instant feedback, XP, and badges |
+| **Civic Readiness** | Personalized voter preparation assessment with actionable recommendations |
+| **Analytics Dashboard** | Engagement metrics, leaderboard, and system health monitoring |
+| **Text-to-Speech** | Google Cloud TTS for audio narration of election information |
 
 ### API Endpoints
 
@@ -92,7 +92,7 @@ VoteWise uses **Google Gemini 2.0 Flash** as its core AI engine, combined with a
 
 ---
 
-## ☁️ Google Services Integration
+##  Google Services Integration
 
 | # | Service | Purpose | Module |
 |---|---------|---------|--------|
@@ -108,7 +108,7 @@ VoteWise uses **Google Gemini 2.0 Flash** as its core AI engine, combined with a
 
 ---
 
-## 🛠️ Tech Stack
+##  Tech Stack
 
 | Layer | Technology |
 |-------|-----------|
@@ -123,7 +123,7 @@ VoteWise uses **Google Gemini 2.0 Flash** as its core AI engine, combined with a
 
 ---
 
-## 📁 Project Structure
+##  Project Structure
 
 ```
 election-assistant/
@@ -167,7 +167,7 @@ election-assistant/
 
 ---
 
-## ⚡ Quick Start
+##  Quick Start
 
 ### Prerequisites
 - Python 3.11+
@@ -226,7 +226,7 @@ gcloud run deploy votewise-election-assistant \
 
 ---
 
-## 🔑 Environment Variables
+##  Environment Variables
 
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
@@ -240,7 +240,7 @@ gcloud run deploy votewise-election-assistant \
 
 ---
 
-## 📝 Assumptions
+##  Assumptions
 
 1. Users are primarily learning about **U.S. federal elections** (architecture supports localization)
 2. The AI assistant operates in a **nonpartisan, educational** capacity only
@@ -250,7 +250,7 @@ gcloud run deploy votewise-election-assistant \
 
 ---
 
-## 📊 Evaluation Criteria Alignment
+##  Evaluation Criteria Alignment
 
 | Criteria | Implementation |
 |----------|----------------|
@@ -263,6 +263,6 @@ gcloud run deploy votewise-election-assistant \
 
 ---
 
-## 📄 License
+##  License
 
 MIT License — Built for the Google Cloud AI Hackathon
